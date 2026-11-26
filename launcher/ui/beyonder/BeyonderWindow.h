@@ -32,6 +32,8 @@ class QTextBrowser;
 class QTimer;
 class QToolButton;
 class MinecraftInstance;
+class BeyonderSettingsPage;
+class BeyonderAccountPage;
 
 /**
  * Single-game home screen: one managed Beyonder instance, installed and kept up to date
@@ -42,6 +44,8 @@ class MinecraftInstance;
  */
 class BeyonderWindow : public QMainWindow {
     Q_OBJECT
+    friend class BeyonderSettingsPage;
+    friend class BeyonderAccountPage;
 
    public:
     explicit BeyonderWindow(QWidget* parent = nullptr);
@@ -65,6 +69,9 @@ class BeyonderWindow : public QMainWindow {
 
    private:
     enum class State : std::uint8_t { Checking, NeedsInstall, NeedsUpdate, Ready, Installing, Running, Error };
+
+    void applyTheme();
+    bool launcherUpdateAvailable() const;
 
     // UI construction
     QWidget* buildTitleBar();
@@ -132,6 +139,8 @@ class BeyonderWindow : public QMainWindow {
     QString m_accessMessage;
     QUrl m_accessLinkUrl;
     QString m_accessDiscordName;
+    QString m_accessPathway;   // optional "character" info from the access service
+    int m_accessSequence = -1;
     NetJob::Ptr m_accessJob;
     QTimer* m_accessTimer = nullptr;
 
@@ -171,6 +180,11 @@ class BeyonderWindow : public QMainWindow {
 
     // News page
     QTextBrowser* m_newsView = nullptr;
+
+    // Account & Settings pages
+    BeyonderAccountPage* m_accountPage = nullptr;
+    BeyonderSettingsPage* m_settingsPage = nullptr;
+    QTimer* m_updateTimer = nullptr;
 
     // Status bar
     QLabel* m_statusIcon = nullptr;

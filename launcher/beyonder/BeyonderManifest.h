@@ -76,6 +76,10 @@ struct BeyonderManifest {
 
     QString accessUrl;  // template, may be empty
 
+    // "launcher": { "version": "0.1.1", "url": "https://github.com/.../releases/latest" }
+    QString latestLauncherVersion;
+    QUrl launcherUrl;
+
     const Edition* edition(const QString& id) const;
 
     // Returns the manifest, or nothing and an error message in errorOut.

@@ -829,6 +829,13 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
         // Chosen pack edition (manifest "editions" id) and the one currently installed
         m_settings->registerSetting("BeyonderEdition", "standard");
         m_settings->registerSetting("BeyonderInstalledEdition", "");
+        // Beyonder home screen preferences
+        m_settings->registerSetting("BeyonderAccent", "crimson");
+        m_settings->registerSetting("BeyonderBackdrop", true);
+        m_settings->registerSetting("BeyonderAutoUpdate", true);
+        m_settings->registerSetting("BeyonderShowToasts", true);
+        m_settings->registerSetting("BeyonderCheckIntervalMin", 15);
+        m_settings->registerSetting("BeyonderSessions", 0);
 
         m_settings->registerSetting("ConsoleWindowState", "");
         m_settings->registerSetting("ConsoleWindowGeometry", "");

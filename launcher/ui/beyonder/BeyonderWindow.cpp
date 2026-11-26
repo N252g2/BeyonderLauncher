@@ -49,219 +49,17 @@
 #include "minecraft/launch/MinecraftTarget.h"
 #include "net/Request.h"
 #include "ui/dialogs/MSALoginDialog.h"
+#include "ui/beyonder/BeyonderAccountPage.h"
+#include "ui/beyonder/BeyonderSettingsPage.h"
+#include "ui/beyonder/BeyonderStyle.h"
+
+using namespace Beyonder;
 
 // =====================================================================================================================
 // Look and feel
 // =====================================================================================================================
 
 namespace {
-
-namespace Color {
-const char* const Green = "#4ade80";
-const char* const Amber = "#f5b84a";
-const char* const Red = "#ef4444";
-const char* const Muted = "#8b8b93";
-}  // namespace Color
-
-const char* const s_styleSheet = R"(
-* {
-    font-family: "Segoe UI Variable Text", "Segoe UI", "Inter", "SF Pro Text", "Helvetica Neue", "Noto Sans", sans-serif;
-    font-size: 13px;
-    color: #ededef;
-}
-#bRoot { background: #0e0e10; }
-#bTitleBar, #bSidebar, #bStatusBar { background: #0e0e10; }
-#bTitleBar { border-bottom: 1px solid #1d1d21; }
-#bStatusBar { border-top: 1px solid #1d1d21; }
-#bSidebar { border-right: 1px solid #1d1d21; }
-#bContent { background: #0a0a0b; }
-
-#bBrand { font-size: 15px; font-weight: 700; letter-spacing: 1px; }
-#bPill {
-    color: #b4b4bc; font-size: 11px; padding: 2px 7px;
-    border: 1px solid #2a2a2f; border-radius: 5px; background: #151518;
-}
-
-/* window controls */
-#bWinButton { background: transparent; border: none; border-radius: 6px; padding: 6px; }
-#bWinButton:hover { background: #1c1c20; }
-#bCloseButton { background: transparent; border: none; border-radius: 6px; padding: 6px; }
-#bCloseButton:hover { background: #c42b1c; }
-
-/* green call-to-action (updates) */
-#bGreenButton {
-    background: #4ade80; color: #052e12; font-weight: 600;
-    border: none; border-radius: 6px; padding: 7px 14px;
-}
-#bGreenButton:hover { background: #6ee7a0; }
-
-#bAccount {
-    background: #151518; border: 1px solid #26262b; border-radius: 8px; padding: 4px 10px 4px 6px;
-    font-weight: 600;
-}
-#bAccount:hover { border-color: #34343a; }
-#bAccount::menu-indicator { image: none; width: 0; }
-
-/* sidebar */
-#bSection { color: #6b6b74; font-size: 11px; font-weight: 600; letter-spacing: 1px; padding: 4px 10px; }
-#bNav {
-    text-align: left; padding: 9px 10px; border: 1px solid transparent; border-radius: 7px;
-    background: transparent; color: #c9c9d0;
-}
-#bNav:hover { background: #151518; }
-#bNav:checked { background: #1a1a1e; border-color: #26262b; color: #ffffff; font-weight: 600; }
-#bQuick {
-    text-align: left; background: #131316; border: 1px solid #232327; border-radius: 9px; padding: 8px;
-}
-#bQuick:hover { border-color: #34343a; }
-#bQuickTitle { font-weight: 600; }
-#bQuickStatus { color: #8b8b93; font-size: 11px; }
-#bCommunity {
-    background: transparent; border: 1px solid #26262b; border-radius: 7px; padding: 7px 8px; color: #c9c9d0;
-}
-#bCommunity:hover { background: #151518; }
-#bSideUpdate {
-    text-align: left; background: rgba(74, 222, 128, 0.07); border: 1px solid rgba(74, 222, 128, 0.45);
-    border-radius: 9px; padding: 10px;
-}
-#bSideUpdate:hover { background: rgba(74, 222, 128, 0.12); }
-#bSideUpdateTitle { color: #4ade80; font-weight: 600; }
-#bSideUpdateText { color: #b4b4bc; font-size: 11px; }
-
-/* content */
-#bH1 { font-size: 26px; font-weight: 700; }
-#bCount { font-size: 11px; color: #b4b4bc; border: 1px solid #2a2a2f; border-radius: 5px; padding: 1px 7px; background: #121214; }
-#bSubtle { color: #8b8b93; }
-#bStrip { background: #0e0e10; border: 1px solid #1d1d21; border-radius: 9px; }
-#bStripText { font-weight: 600; }
-#bGhost {
-    background: #121214; border: 1px solid #26262b; border-radius: 7px; padding: 6px 12px; color: #d6d6dc;
-}
-#bGhost:hover { border-color: #3a3a40; }
-
-#bCard { background: #0e0e10; border: 1px solid #1d1d21; border-radius: 11px; }
-#bCardTitle { font-size: 15px; font-weight: 700; }
-#bCardSub { color: #8b8b93; font-size: 12px; }
-#bBadge {
-    background: rgba(10, 10, 11, 0.82); border: 1px solid #34343a; border-radius: 5px;
-    padding: 2px 7px; font-size: 11px; font-weight: 600;
-}
-#bBadgeGreen { background: rgba(20, 60, 35, 0.9); border: 1px solid rgba(74,222,128,0.5); color: #4ade80; border-radius: 5px; padding: 2px 7px; font-size: 11px; font-weight: 600; }
-#bBadgeAmber { background: rgba(70, 50, 10, 0.9); border: 1px solid rgba(245,184,74,0.5); color: #f5b84a; border-radius: 5px; padding: 2px 7px; font-size: 11px; font-weight: 600; }
-#bBadgeRed { background: rgba(70, 15, 15, 0.9); border: 1px solid rgba(239,68,68,0.5); color: #f87171; border-radius: 5px; padding: 2px 7px; font-size: 11px; font-weight: 600; }
-#bCoverText { color: #d6d6dc; font-size: 11px; font-weight: 600; }
-
-#bPlay {
-    background: #c0303a; color: #ffffff; font-weight: 700; font-size: 13px; letter-spacing: 0.5px;
-    border: 1px solid #d94550; border-radius: 8px; padding: 9px 14px;
-}
-#bPlay:hover { background: #d23c46; }
-#bPlay:disabled { background: #18181b; border-color: #26262b; color: #6b6b74; }
-#bPlay[running="true"] { background: rgba(74, 222, 128, 0.1); border-color: rgba(74, 222, 128, 0.45); color: #4ade80; }
-#bPlay[blocked="true"] { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.45); color: #f87171; }
-#bPlay[blocked="true"]:hover { background: rgba(239, 68, 68, 0.16); }
-#bEdition {
-    background: rgba(10, 10, 11, 0.82); border: 1px solid #34343a; border-radius: 5px;
-    padding: 2px 7px; font-size: 11px; font-weight: 600;
-}
-#bEdition:hover { border-color: #5a5a62; }
-#bEdition::menu-indicator { image: none; width: 0; }
-#bIconButton { background: #121214; border: 1px solid #26262b; border-radius: 8px; padding: 8px; }
-#bIconButton:hover { border-color: #3a3a40; }
-
-#bDashed {
-    background: transparent; border: 1px dashed #2c2c32; border-radius: 11px; color: #8b8b93; padding: 16px;
-}
-#bDashed:hover { border-color: #45454c; background: #0d0d0f; }
-
-#bNewsView { background: #0e0e10; border: 1px solid #1d1d21; border-radius: 11px; padding: 18px; }
-
-/* status bar */
-#bStatusText { color: #4ade80; font-size: 12px; }
-#bStatusText[idle="true"] { color: #8b8b93; }
-#bFooterButton { background: transparent; border: none; color: #8b8b93; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; padding: 4px 8px; }
-#bFooterButton:hover { color: #ededef; }
-QProgressBar { background: #1a1a1e; border: none; border-radius: 3px; max-height: 6px; min-height: 6px; }
-QProgressBar::chunk { background: #4ade80; border-radius: 3px; }
-
-/* toast */
-#bToast { background: #0e0e10; border: 1px solid #26262b; border-radius: 11px; }
-#bToastIcon { background: rgba(74, 222, 128, 0.12); border: 1px solid rgba(74, 222, 128, 0.4); border-radius: 9px; }
-#bToastTitle { font-weight: 700; }
-#bToastText { color: #b4b4bc; font-size: 12px; }
-
-QMenu { background: #121214; border: 1px solid #26262b; border-radius: 8px; padding: 5px; }
-QMenu::item { padding: 7px 22px 7px 26px; border-radius: 5px; color: #ededef; }
-QMenu::item:selected { background: #1f1f24; }
-QMenu::separator { height: 1px; background: #26262b; margin: 5px 6px; }
-QMenu::indicator { width: 8px; height: 8px; left: 10px; }
-QMenu::indicator:checked { background: #4ade80; border-radius: 4px; }
-QMenu::indicator:unchecked { background: transparent; }
-QToolTip { background: #121214; color: #ededef; border: 1px solid #26262b; padding: 4px 6px; }
-QScrollBar:vertical { background: transparent; width: 10px; margin: 2px; }
-QScrollBar::handle:vertical { background: #2a2a2f; border-radius: 4px; min-height: 30px; }
-QScrollBar::add-line, QScrollBar::sub-line { height: 0; }
-)";
-
-// Simple stroked line icons, drawn from small SVG bodies (24x24 grid).
-QIcon lineIcon(const QString& body, const QString& color = QStringLiteral("#ededef"), int size = 18, bool filled = false)
-{
-    const int px = size * 2;
-    const QString svg =
-        QString(R"(<svg xmlns="http://www.w3.org/2000/svg" width="%1" height="%1" viewBox="0 0 24 24" fill="%2" stroke="%3" )"
-                R"(stroke-width="2" stroke-linecap="round" stroke-linejoin="round">%4</svg>)")
-            .arg(px)
-            .arg(filled ? color : QStringLiteral("none"), color, body);
-    QPixmap pm;
-    pm.loadFromData(svg.toUtf8(), "SVG");
-    pm.setDevicePixelRatio(2.0);
-    return QIcon(pm);
-}
-
-namespace Icon {
-const char* const Home = R"(<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>)";
-const char* const News = R"(<rect x="3" y="5" width="18" height="15" rx="2"/><path d="M7 9h10M7 13h10M7 17h6"/>)";
-const char* const Settings =
-    R"(<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>)";
-const char* const Grid = R"(<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>)";
-const char* const Folder = R"(<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>)";
-const char* const Sliders = R"(<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>)";
-const char* const Refresh = R"(<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>)";
-const char* const Download = R"(<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>)";
-const char* const Chat = R"(<path d="M4 5h16v11H9l-5 4z"/>)";
-const char* const Globe = R"(<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>)";
-const char* const Activity = R"(<path d="M3 12h4l3-7 4 14 3-7h4"/>)";
-const char* const Info = R"(<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>)";
-const char* const Check = R"(<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>)";
-const char* const Play = R"(<path d="M8 5v14l11-7z"/>)";
-const char* const Chip = R"(<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>)";
-const char* const Close = R"(<path d="M6 6l12 12M18 6 6 18"/>)";
-const char* const Minimize = R"(<path d="M6 12h12"/>)";
-const char* const Maximize = R"(<rect x="6" y="6" width="12" height="12" rx="1"/>)";
-const char* const Restore = R"(<rect x="5" y="8" width="11" height="11" rx="1"/><path d="M8 8V5h11v11h-3"/>)";
-}  // namespace Icon
-
-QString humanHours(int64_t seconds)
-{
-    const double hours = seconds / 3600.0;
-    if (hours < 0.1) {
-        return QObject::tr("%1 min").arg(qMax<int64_t>(seconds / 60, 0));
-    }
-    return QObject::tr("%1 hrs").arg(hours, 0, 'f', 1);
-}
-
-QLabel* makeLabel(const QString& text, const char* objectName, QWidget* parent)
-{
-    auto* l = new QLabel(text, parent);
-    l->setObjectName(objectName);
-    return l;
-}
-
-void restyle(QWidget* w)
-{
-    w->style()->unpolish(w);
-    w->style()->polish(w);
-}
 
 // Window root: paints the background and border, and turns its outer margin into resize handles.
 class FrameRoot : public QWidget {
@@ -407,7 +205,7 @@ BeyonderWindow::BeyonderWindow(QWidget* parent) : QMainWindow(parent)
 
     m_root = new FrameRoot(this);
     m_root->setObjectName("bRoot");
-    m_root->setStyleSheet(s_styleSheet);
+    applyTheme();
     setCentralWidget(m_root);
 
     auto* rootLayout = new QVBoxLayout(m_root);
@@ -426,6 +224,10 @@ BeyonderWindow::BeyonderWindow(QWidget* parent) : QMainWindow(parent)
     m_pages->setAttribute(Qt::WA_StyledBackground);
     m_pages->addWidget(buildLibraryPage());
     m_pages->addWidget(buildNewsPage());
+    m_accountPage = new BeyonderAccountPage(this);
+    m_settingsPage = new BeyonderSettingsPage(this);
+    m_pages->addWidget(m_accountPage);
+    m_pages->addWidget(m_settingsPage);
     middleLayout->addWidget(m_pages, 1);
     rootLayout->addWidget(middle, 1);
 
@@ -453,6 +255,11 @@ BeyonderWindow::BeyonderWindow(QWidget* parent) : QMainWindow(parent)
     connect(m_accessTimer, &QTimer::timeout, this, &BeyonderWindow::checkAccess);
     m_accessTimer->start();
     connect(accounts, &AccountList::defaultAccountChanged, this, &BeyonderWindow::checkAccess);
+
+    m_updateTimer = new QTimer(this);
+    m_updateTimer->setInterval(qBound(5, APPLICATION->settings()->get("BeyonderCheckIntervalMin").toInt(), 60) * 60 * 1000);
+    connect(m_updateTimer, &QTimer::timeout, this, &BeyonderWindow::checkForUpdates);
+    m_updateTimer->start();
 
     watchInstance(findInstance());
     updateNews();
@@ -546,14 +353,14 @@ QWidget* BeyonderWindow::buildSidebar()
     };
     auto* library = navButton(Icon::Home, tr("Library"));
     auto* news = navButton(Icon::News, tr("News"));
+    auto* account = navButton(Icon::User, tr("Account"));
+    auto* settings = navButton(Icon::Settings, tr("Settings"));
     m_nav->addButton(library, 0);
     m_nav->addButton(news, 1);
+    m_nav->addButton(account, 2);
+    m_nav->addButton(settings, 3);
     library->setChecked(true);
     connect(m_nav, &QButtonGroup::idClicked, this, [this](int id) { m_pages->setCurrentIndex(id); });
-
-    auto* settings = navButton(Icon::Settings, tr("Settings"));
-    settings->setCheckable(false);
-    connect(settings, &QPushButton::clicked, this, [this] { APPLICATION->ShowGlobalSettings(this); });
     auto* advanced = navButton(Icon::Grid, tr("Advanced"));
     advanced->setCheckable(false);
     advanced->setToolTip(tr("Open the full launcher: instances, mods, logs"));
@@ -1105,6 +912,10 @@ void BeyonderWindow::refreshState()
         setState(State::NeedsInstall);
     } else if (inst->getManagedPackVersionID() != m_manifest->packVersion || installedEditionId() != currentEditionId()) {
         setState(State::NeedsUpdate);
+        // A new release (not an edition switch the player hasn't confirmed) installs by itself when auto-update is on.
+        if (inst->getManagedPackVersionID() != m_manifest->packVersion && APPLICATION->settings()->get("BeyonderAutoUpdate").toBool()) {
+            QTimer::singleShot(0, this, [this] { startInstall(false); });
+        }
     } else {
         setState(State::Ready);
     }
@@ -1311,9 +1122,12 @@ void BeyonderWindow::updateUi()
         m_statusProgress->setRange(0, 0);
     }
     m_ramButton->setText(tr(" %1 MB").arg(currentMaxMemoryMB()));
+    if (m_state == State::Ready && status.isEmpty() && launcherUpdateAvailable()) {
+        m_statusText->setText(tr("Launcher %1 is available: see Settings › Updates.").arg(m_manifest->latestLauncherVersion));
+    }
 
     // Toast: once per new version, until dismissed
-    if (updateAvailable && m_toastDismissedFor != latest) {
+    if (updateAvailable && m_toastDismissedFor != latest && APPLICATION->settings()->get("BeyonderShowToasts").toBool()) {
         m_toastText->setText(tr("Beyonder %1 is ready to install.").arg(latest));
         showToast(true);
     } else if (!updateAvailable) {
@@ -1321,6 +1135,30 @@ void BeyonderWindow::updateUi()
     }
 
     updateAccessLabel();
+    if (m_accountPage)
+        m_accountPage->refresh();
+    if (m_settingsPage)
+        m_settingsPage->refresh();
+}
+
+void BeyonderWindow::applyTheme()
+{
+    m_root->setStyleSheet(Beyonder::styleSheet(APPLICATION->settings()->get("BeyonderAccent").toString(),
+                                     APPLICATION->settings()->get("BeyonderBackdrop").toBool()));
+    if (m_newsView) {
+        const QColor link = accent(APPLICATION->settings()->get("BeyonderAccent").toString()).color.lighter(150);
+        m_newsView->document()->setDefaultStyleSheet(
+            QString("h2 { font-size: 18px; margin: 0 0 6px 0; } h3 { font-size: 15px; margin: 18px 0 2px 0; }"
+                    ".date { color: #8b8b93; font-size: 11px; } a { color: %1; } p { line-height: 140%; }")
+                .arg(link.name()));
+        updateNews();
+    }
+}
+
+bool BeyonderWindow::launcherUpdateAvailable() const
+{
+    return m_manifest && !m_manifest->latestLauncherVersion.isEmpty() &&
+           Version(BuildConfig.versionString()) < Version(m_manifest->latestLauncherVersion);
 }
 
 void BeyonderWindow::updateAccessLabel()
@@ -1680,6 +1518,7 @@ void BeyonderWindow::launchGame()
         target.reset(new MinecraftTarget(MinecraftTarget::parse(m_manifest->server, false)));
     }
     if (APPLICATION->launch(inst, LaunchMode::Normal, target, account)) {
+        APPLICATION->settings()->set("BeyonderSessions", APPLICATION->settings()->get("BeyonderSessions").toInt() + 1);
         setState(State::Running, tr("Starting Beyonder…"));
     }
 }
@@ -1868,6 +1707,9 @@ void BeyonderWindow::onAccessReply(const QByteArray& reply)
     m_access = s_statuses.value(status, Access::Unreachable);
     m_accessMessage = obj.value("message").toString();
     m_accessDiscordName = obj.value("discordName").toString();
+    const auto character = obj.value("character").toObject();
+    m_accessPathway = character.value("pathway").toString();
+    m_accessSequence = character.value("sequence").toInt(-1);
     const QUrl link(obj.value("linkUrl").toString());
     m_accessLinkUrl = (link.isValid() && link.scheme() == "https") ? link : QUrl();
 

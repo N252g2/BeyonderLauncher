@@ -91,6 +91,10 @@ std::optional<BeyonderManifest> BeyonderManifest::parse(const QByteArray& data, 
                                    m.recommendedMemoryMB });
     }
 
+    const auto launcher = obj.value("launcher").toObject();
+    m.latestLauncherVersion = launcher.value("version").toString().trimmed();
+    m.launcherUrl = httpsOrEmpty(launcher.value("url").toString());
+
     m.accessUrl = obj.value("accessUrl").toString().trimmed();
     if (!m.accessUrl.isEmpty() && !m.accessUrl.startsWith("https://") && !m.accessUrl.startsWith("file://")) {
         errorOut = QCoreApplication::translate("BeyonderManifest", "The pack manifest's \"accessUrl\" must be an https:// link.");

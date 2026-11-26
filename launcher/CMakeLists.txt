@@ -812,6 +812,12 @@ SET(LAUNCHER_SOURCES
     ui/MainWindow.cpp
     ui/beyonder/BeyonderWindow.h
     ui/beyonder/BeyonderWindow.cpp
+    ui/beyonder/BeyonderStyle.h
+    ui/beyonder/BeyonderStyle.cpp
+    ui/beyonder/BeyonderSettingsPage.h
+    ui/beyonder/BeyonderSettingsPage.cpp
+    ui/beyonder/BeyonderAccountPage.h
+    ui/beyonder/BeyonderAccountPage.cpp
     ui/InstanceWindow.h
     ui/InstanceWindow.cpp
     ui/ViewLogWindow.h
