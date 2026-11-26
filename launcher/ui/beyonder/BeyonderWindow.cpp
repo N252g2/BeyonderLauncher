@@ -58,7 +58,6 @@ const char* const Green = "#4ade80";
 const char* const Amber = "#f5b84a";
 const char* const Red = "#ef4444";
 const char* const Muted = "#8b8b93";
-const char* const Text = "#ededef";
 }  // namespace Color
 
 const char* const s_styleSheet = R"(
@@ -192,7 +191,7 @@ QScrollBar::add-line, QScrollBar::sub-line { height: 0; }
 )";
 
 // Simple stroked line icons, drawn from small SVG bodies (24x24 grid).
-QIcon lineIcon(const QString& body, const QString& color = Color::Text, int size = 18, bool filled = false)
+QIcon lineIcon(const QString& body, const QString& color = QStringLiteral("#ededef"), int size = 18, bool filled = false)
 {
     const int px = size * 2;
     const QString svg =
@@ -218,17 +217,14 @@ const char* const Refresh = R"(<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 
 const char* const Download = R"(<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>)";
 const char* const Chat = R"(<path d="M4 5h16v11H9l-5 4z"/>)";
 const char* const Globe = R"(<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>)";
-const char* const Info = R"(<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>)";
 const char* const Activity = R"(<path d="M3 12h4l3-7 4 14 3-7h4"/>)";
 const char* const Check = R"(<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>)";
 const char* const Play = R"(<path d="M8 5v14l11-7z"/>)";
 const char* const Chip = R"(<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>)";
-const char* const Bag = R"(<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>)";
 const char* const Close = R"(<path d="M6 6l12 12M18 6 6 18"/>)";
 const char* const Minimize = R"(<path d="M6 12h12"/>)";
 const char* const Maximize = R"(<rect x="6" y="6" width="12" height="12" rx="1"/>)";
 const char* const Restore = R"(<rect x="5" y="8" width="11" height="11" rx="1"/><path d="M8 8V5h11v11h-3"/>)";
-const char* const Chevron = R"(<path d="m7 10 5 5 5-5"/>)";
 }  // namespace Icon
 
 QString humanHours(int64_t seconds)
