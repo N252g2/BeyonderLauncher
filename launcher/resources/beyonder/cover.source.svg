@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="480" height="560" viewBox="0 0 480 560">
+  <defs>
+    <radialGradient id="sky" cx="50%" cy="30%" r="80%">
+      <stop offset="0" stop-color="#1a1420"/><stop offset="1" stop-color="#050506"/>
+    </radialGradient>
+    <radialGradient id="moonGlow" cx="50%" cy="50%" r="50%">
+      <stop offset="0" stop-color="#c0303a" stop-opacity="0.55"/><stop offset="1" stop-color="#c0303a" stop-opacity="0"/>
+    </radialGradient>
+    <radialGradient id="moon" cx="40%" cy="38%" r="65%">
+      <stop offset="0" stop-color="#e05a50"/><stop offset="0.7" stop-color="#9c1c28"/><stop offset="1" stop-color="#5a0c16"/>
+    </radialGradient>
+    <linearGradient id="tower" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0" stop-color="#d9d6de"/><stop offset="0.5" stop-color="#ffffff"/><stop offset="1" stop-color="#a9a5b2"/>
+    </linearGradient>
+    <linearGradient id="far" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#2b2832"/><stop offset="1" stop-color="#121015"/>
+    </linearGradient>
+    <linearGradient id="near" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#3b3843"/><stop offset="1" stop-color="#141217"/>
+    </linearGradient>
+    <linearGradient id="fog" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e6e3ec" stop-opacity="0"/><stop offset="0.45" stop-color="#e6e3ec" stop-opacity="0.18"/><stop offset="1" stop-color="#e6e3ec" stop-opacity="0.35"/>
+    </linearGradient>
+    <filter id="blur"><feGaussianBlur stdDeviation="6"/></filter>
+  </defs>
+  <rect width="480" height="560" fill="url(#sky)"/>
+  <!-- moon -->
+  <circle cx="330" cy="150" r="150" fill="url(#moonGlow)"/>
+  <circle cx="330" cy="150" r="78" fill="url(#moon)"/>
+  <circle cx="306" cy="130" r="11" fill="#5a0c16" opacity="0.35"/><circle cx="352" cy="172" r="8" fill="#5a0c16" opacity="0.3"/><circle cx="348" cy="118" r="5" fill="#5a0c16" opacity="0.3"/>
+  <!-- stars -->
+  <g fill="#f3efe6"><circle cx="60" cy="70" r="1.6"/><circle cx="120" cy="40" r="1.1"/><circle cx="200" cy="90" r="1.3"/><circle cx="430" cy="60" r="1.2"/><circle cx="90" cy="150" r="1"/><circle cx="440" cy="260" r="1"/></g>
+  <!-- far skyline -->
+  <path fill="url(#far)" d="M0 380 L0 330 L30 330 L30 300 L44 286 L58 300 L58 320 L84 320 L84 290 L96 270 L108 290 L108 318 L132 318 L132 340 L150 340 L150 300 L160 284 L170 300 L170 340 L300 340 L300 296 L312 280 L324 296 L324 326 L350 326 L350 300 L372 300 L372 270 L380 252 L388 270 L388 310 L420 310 L420 288 L440 288 L440 316 L480 316 L480 380 Z"/>
+  <!-- chimneys / smoke -->
+  <g fill="#8d889c" opacity="0.35" filter="url(#blur)"><ellipse cx="52" cy="262" rx="18" ry="10"/><ellipse cx="40" cy="236" rx="22" ry="12"/><ellipse cx="420" cy="270" rx="20" ry="10"/></g>
+  <!-- clock tower -->
+  <g fill="url(#tower)">
+    <path d="M240 58 L250 130 L230 130 Z"/>
+    <rect x="226" y="128" width="28" height="18"/>
+    <path d="M218 146 L262 146 L258 160 L222 160 Z"/>
+    <rect x="214" y="160" width="52" height="70"/>
+    <rect x="206" y="230" width="68" height="12"/>
+    <rect x="212" y="242" width="56" height="190"/>
+    <path d="M206 230 L214 214 L214 230 Z"/><path d="M274 230 L266 214 L266 230 Z"/>
+  </g>
+  <circle cx="240" cy="194" r="18" fill="#1a1420"/>
+  <circle cx="240" cy="194" r="15" fill="#f3efe6"/>
+  <g stroke="#1a1420" stroke-width="2.2" stroke-linecap="round"><line x1="240" y1="194" x2="240" y2="183"/><line x1="240" y1="194" x2="248" y2="198"/></g>
+  <g fill="#2a2730"><rect x="228" y="262" width="8" height="26" rx="4"/><rect x="244" y="262" width="8" height="26" rx="4"/><rect x="228" y="310" width="8" height="26" rx="4"/><rect x="244" y="310" width="8" height="26" rx="4"/></g>
+  <!-- near buildings -->
+  <path fill="url(#near)" d="M0 560 L0 400 L40 400 L40 372 L62 352 L84 372 L84 396 L120 396 L120 360 L136 344 L152 360 L152 410 L196 410 L196 380 L212 380 L212 560 Z"/>
+  <path fill="url(#near)" d="M268 560 L268 386 L292 386 L292 404 L330 404 L330 366 L346 340 L362 366 L362 398 L400 398 L400 376 L424 356 L448 376 L448 404 L480 404 L480 560 Z"/>
+  <g fill="#e2a14a" opacity="0.85"><rect x="56" y="410" width="8" height="12"/><rect x="132" y="380" width="7" height="10"/><rect x="340" y="384" width="7" height="10"/><rect x="420" y="392" width="8" height="12"/><rect x="304" y="420" width="7" height="10"/></g>
+  <!-- gas lamps -->
+  <g fill="#cfcbd8"><rect x="186" y="440" width="3" height="60"/><rect x="292" y="440" width="3" height="60"/></g>
+  <g fill="#f5c46b"><circle cx="187.5" cy="438" r="5"/><circle cx="293.5" cy="438" r="5"/></g>
+  <g fill="#f5c46b" opacity="0.25" filter="url(#blur)"><circle cx="187.5" cy="438" r="16"/><circle cx="293.5" cy="438" r="16"/></g>
+  <!-- fog -->
+  <rect y="360" width="480" height="200" fill="url(#fog)"/>
+  <path d="M0 470 C 80 450, 160 480, 240 466 C 320 452, 400 476, 480 460 L480 560 L0 560 Z" fill="#d8d5df" opacity="0.28"/>
+  <path d="M0 510 C 100 494, 180 520, 280 506 C 360 496, 420 512, 480 504 L480 560 L0 560 Z" fill="#0a0a0b" opacity="0.92"/>
+</svg>

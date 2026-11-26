@@ -1195,6 +1195,7 @@ if(WIN32)
 endif()
 
 qt_add_resources(LAUNCHER_RESOURCES
+    resources/beyonder/beyonder.qrc
     resources/backgrounds/backgrounds.qrc
     resources/multimc/multimc.qrc
     resources/pe_dark/pe_dark.qrc

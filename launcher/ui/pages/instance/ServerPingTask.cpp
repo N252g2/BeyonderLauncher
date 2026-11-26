@@ -1,3 +1,5 @@
+#include <QElapsedTimer>
+#include <memory>
 #include <QFutureWatcher>
 
 #include <Json.h>
@@ -29,9 +31,13 @@ void ServerPingTask::executeTask()
 
         // Now that we have the IP and port, query the server
         McClient* client = new McClient(nullptr, m_domain, ip, port);
+        auto timer = std::make_shared<QElapsedTimer>();
+        timer->start();
 
-        connect(client, &McClient::succeeded, this, [this](QJsonObject data) {
+        connect(client, &McClient::succeeded, this, [this, timer](QJsonObject data) {
+            m_outputLatencyMs = timer->elapsed();
             m_outputOnlinePlayers = getOnlinePlayers(data);
+            m_outputMaxPlayers = data.value("players").toObject().value("max").toInt(-1);
             qDebug() << "Online players:" << m_outputOnlinePlayers;
             emitSucceeded();
         });

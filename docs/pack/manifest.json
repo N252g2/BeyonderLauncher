@@ -3,7 +3,16 @@
   "packVersion": "0.1.0",
   "mrpackUrl": "https://github.com/N252g2/BeyonderPack/releases/download/v0.1.0/Beyonder-0.1.0.mrpack",
   "server": "play.example.net",
+  "serverName": "Tingen",
+  "season": "Season 0",
   "recommendedMemoryMB": 6144,
   "minLauncherVersion": "12.0.0",
-  "motd": "<h2>Season 0: Tingen</h2><p>The fog is thin tonight. Closed testing only.</p>"
+  "links": {
+    "discord": "https://discord.gg/your-invite",
+    "website": "https://n252g2.github.io/BeyonderLauncher"
+  },
+  "motd": "<h2>Season 0: Tingen</h2><p>The fog is thin tonight. Closed testing only.</p>",
+  "news": [
+    { "title": "Closed testing begins", "date": "2026-11-26", "body": "<p>Whitelist applications are open on Discord.</p>" }
+  ]
 }

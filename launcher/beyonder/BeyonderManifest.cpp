@@ -10,6 +10,7 @@
 #include "BeyonderManifest.h"
 
 #include <QCoreApplication>
+#include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
 
@@ -39,6 +40,25 @@ std::optional<BeyonderManifest> BeyonderManifest::parse(const QByteArray& data, 
     m.recommendedMemoryMB = obj.value("recommendedMemoryMB").toInt(0);
     m.motd = obj.value("motd").toString();
     m.minLauncherVersion = obj.value("minLauncherVersion").toString().trimmed();
+    m.season = obj.value("season").toString().trimmed();
+    m.serverName = obj.value("serverName").toString().trimmed();
+
+    const auto links = obj.value("links").toObject();
+    auto httpsOrEmpty = [](const QString& s) {
+        QUrl u(s.trimmed());
+        return (u.isValid() && (u.scheme() == "https" || u.scheme() == "http")) ? u : QUrl();
+    };
+    m.discordUrl = httpsOrEmpty(links.value("discord").toString());
+    m.websiteUrl = httpsOrEmpty(links.value("website").toString());
+
+    for (const auto& v : obj.value("news").toArray()) {
+        const auto n = v.toObject();
+        NewsItem item{ n.value("title").toString(), n.value("date").toString(), n.value("body").toString(),
+                       httpsOrEmpty(n.value("url").toString()) };
+        if (!item.title.isEmpty()) {
+            m.news.append(item);
+        }
+    }
 
     if (m.packVersion.isEmpty()) {
         errorOut = QCoreApplication::translate("BeyonderManifest", "The pack manifest has no \"packVersion\".");

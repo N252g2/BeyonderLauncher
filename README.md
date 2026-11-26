@@ -49,14 +49,21 @@ On start-up the launcher downloads `Beyonder_MANIFEST_URL` (default: `docs/pack/
   "packVersion": "0.1.0",
   "mrpackUrl": "https://github.com/<you>/BeyonderPack/releases/download/v0.1.0/Beyonder-0.1.0.mrpack",
   "server": "play.example.net",
+  "serverName": "Tingen",
+  "season": "Season 0",
   "recommendedMemoryMB": 6144,
   "minLauncherVersion": "12.0.0",
-  "motd": "<h2>Season 0: Tingen</h2><p>Shown on the home screen.</p>"
+  "links": { "discord": "https://discord.gg/...", "website": "https://..." },
+  "motd": "<h2>Season 0: Tingen</h2><p>Shown at the top of the News page.</p>",
+  "news": [ { "title": "Patch 0.1.0", "date": "2026-11-26", "body": "<p>HTML allowed</p>", "url": "https://..." } ]
 }
 ```
 
 - `mrpackUrl`: a Modrinth-format modpack (`.mrpack`). Updates are applied in place; unchanged files aren't downloaded again.
-- `server`: joined automatically when the player presses Play. Leave it empty to just open the title screen.
+- `server`: joined automatically when the player presses Play, and pinged every minute for the status bar (players online, latency). Leave it empty to just open the title screen.
+- `serverName`, `season`: labels on the server status bar and the game card.
+- `links`: the Discord and Website buttons, plus the Discord card on the Library page.
+- `motd`, `news`: the News page.
 - `recommendedMemoryMB`: applied once, the first time the pack is installed. After that, the player's own setting wins.
 - To release an update: upload the new `.mrpack`, then change `packVersion` and `mrpackUrl` and push.
 

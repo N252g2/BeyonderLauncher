@@ -9,17 +9,31 @@
 
 #include "BeyonderWindow.h"
 
+#include <algorithm>
+
+#include <QButtonGroup>
 #include <QCloseEvent>
 #include <QDebug>
+#include <QDesktopServices>
+#include <QFrame>
+#include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
 #include <QLabel>
+#include <QLinearGradient>
 #include <QMenu>
 #include <QMessageBox>
+#include <QMouseEvent>
+#include <QPainter>
+#include <QPainterPath>
 #include <QProgressBar>
 #include <QPushButton>
+#include <QSizeGrip>
+#include <QStackedWidget>
 #include <QTextBrowser>
+#include <QTimer>
 #include <QToolButton>
 #include <QVBoxLayout>
+#include <QWindow>
 
 #include "Application.h"
 #include "BuildConfig.h"
@@ -33,77 +47,384 @@
 #include "net/Request.h"
 #include "ui/dialogs/MSALoginDialog.h"
 
+// =====================================================================================================================
+// Look and feel
+// =====================================================================================================================
+
 namespace {
+
+namespace Color {
+const char* const Green = "#4ade80";
+const char* const Amber = "#f5b84a";
+const char* const Red = "#ef4444";
+const char* const Muted = "#8b8b93";
+const char* const Text = "#ededef";
+}  // namespace Color
+
 const char* const s_styleSheet = R"(
-#beyonderRoot {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #1d1830, stop:0.55 #120f1d, stop:1 #0b0a12);
+* {
+    font-family: "Segoe UI Variable Text", "Segoe UI", "Inter", "SF Pro Text", "Helvetica Neue", "Noto Sans", sans-serif;
+    font-size: 13px;
+    color: #ededef;
 }
-#beyonderRoot QLabel { color: #e9e4d8; }
-#beyonderTitle { font-size: 26px; font-weight: 600; letter-spacing: 6px; color: #f3efe6; }
-#beyonderSubtitle { color: #a8a2b8; }
-#beyonderStatus { color: #cfc9db; }
-#beyonderVersion { color: #8d889c; font-size: 11px; }
-#beyonderMotd {
-    background: rgba(255, 255, 255, 0.04);
-    border: 1px solid rgba(207, 203, 216, 0.18);
-    border-radius: 8px;
-    color: #e9e4d8;
-    padding: 12px;
+#bRoot { background: #0e0e10; }
+#bTitleBar, #bSidebar, #bStatusBar { background: #0e0e10; }
+#bTitleBar { border-bottom: 1px solid #1d1d21; }
+#bStatusBar { border-top: 1px solid #1d1d21; }
+#bSidebar { border-right: 1px solid #1d1d21; }
+#bContent { background: #0a0a0b; }
+
+#bBrand { font-size: 15px; font-weight: 700; letter-spacing: 1px; }
+#bPill {
+    color: #b4b4bc; font-size: 11px; padding: 2px 7px;
+    border: 1px solid #2a2a2f; border-radius: 5px; background: #151518;
 }
-#beyonderBottom {
-    background: rgba(0, 0, 0, 0.35);
-    border-top: 1px solid rgba(207, 203, 216, 0.15);
+
+/* window controls */
+#bWinButton { background: transparent; border: none; border-radius: 6px; padding: 6px; }
+#bWinButton:hover { background: #1c1c20; }
+#bCloseButton { background: transparent; border: none; border-radius: 6px; padding: 6px; }
+#bCloseButton:hover { background: #c42b1c; }
+
+/* green call-to-action (updates) */
+#bGreenButton {
+    background: #4ade80; color: #052e12; font-weight: 600;
+    border: none; border-radius: 6px; padding: 7px 14px;
 }
-#beyonderPlay {
-    background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #c0303a, stop:1 #7b1020);
-    color: #fff7ef;
-    border: 1px solid #e2574c;
-    border-radius: 6px;
-    font-size: 18px;
-    font-weight: 700;
-    letter-spacing: 3px;
-    padding: 10px 36px;
-    min-width: 180px;
+#bGreenButton:hover { background: #6ee7a0; }
+
+#bAccount {
+    background: #151518; border: 1px solid #26262b; border-radius: 8px; padding: 4px 10px 4px 6px;
+    font-weight: 600;
 }
-#beyonderPlay:hover { background: qlineargradient(x1:0, y1:0, x2:0, y2:1, stop:0 #d23c46, stop:1 #8c1525); }
-#beyonderPlay:disabled { background: #3a3446; border-color: #4a4458; color: #8d889c; }
-#beyonderRoot QToolButton {
-    color: #e9e4d8;
-    background: transparent;
-    border: 1px solid transparent;
-    border-radius: 6px;
-    padding: 6px 10px;
+#bAccount:hover { border-color: #34343a; }
+#bAccount::menu-indicator { image: none; width: 0; }
+
+/* sidebar */
+#bSection { color: #6b6b74; font-size: 11px; font-weight: 600; letter-spacing: 1px; padding: 4px 10px; }
+#bNav {
+    text-align: left; padding: 9px 10px; border: 1px solid transparent; border-radius: 7px;
+    background: transparent; color: #c9c9d0;
 }
-#beyonderRoot QToolButton:hover { border-color: rgba(207, 203, 216, 0.35); }
-#beyonderRoot QProgressBar {
-    background: rgba(255, 255, 255, 0.08);
-    border: none;
-    border-radius: 3px;
-    max-height: 6px;
+#bNav:hover { background: #151518; }
+#bNav:checked { background: #1a1a1e; border-color: #26262b; color: #ffffff; font-weight: 600; }
+#bQuick {
+    text-align: left; background: #131316; border: 1px solid #232327; border-radius: 9px; padding: 8px;
 }
-#beyonderRoot QProgressBar::chunk { background: #c0303a; border-radius: 3px; }
+#bQuick:hover { border-color: #34343a; }
+#bQuickTitle { font-weight: 600; }
+#bQuickStatus { color: #8b8b93; font-size: 11px; }
+#bCommunity {
+    background: transparent; border: 1px solid #26262b; border-radius: 7px; padding: 7px 8px; color: #c9c9d0;
+}
+#bCommunity:hover { background: #151518; }
+#bSideUpdate {
+    text-align: left; background: rgba(74, 222, 128, 0.07); border: 1px solid rgba(74, 222, 128, 0.45);
+    border-radius: 9px; padding: 10px;
+}
+#bSideUpdate:hover { background: rgba(74, 222, 128, 0.12); }
+#bSideUpdateTitle { color: #4ade80; font-weight: 600; }
+#bSideUpdateText { color: #b4b4bc; font-size: 11px; }
+
+/* content */
+#bH1 { font-size: 26px; font-weight: 700; }
+#bCount { font-size: 11px; color: #b4b4bc; border: 1px solid #2a2a2f; border-radius: 5px; padding: 1px 7px; background: #121214; }
+#bSubtle { color: #8b8b93; }
+#bStrip { background: #0e0e10; border: 1px solid #1d1d21; border-radius: 9px; }
+#bStripText { font-weight: 600; }
+#bGhost {
+    background: #121214; border: 1px solid #26262b; border-radius: 7px; padding: 6px 12px; color: #d6d6dc;
+}
+#bGhost:hover { border-color: #3a3a40; }
+
+#bCard { background: #0e0e10; border: 1px solid #1d1d21; border-radius: 11px; }
+#bCardTitle { font-size: 15px; font-weight: 700; }
+#bCardSub { color: #8b8b93; font-size: 12px; }
+#bBadge {
+    background: rgba(10, 10, 11, 0.82); border: 1px solid #34343a; border-radius: 5px;
+    padding: 2px 7px; font-size: 11px; font-weight: 600;
+}
+#bBadgeGreen { background: rgba(20, 60, 35, 0.9); border: 1px solid rgba(74,222,128,0.5); color: #4ade80; border-radius: 5px; padding: 2px 7px; font-size: 11px; font-weight: 600; }
+#bBadgeAmber { background: rgba(70, 50, 10, 0.9); border: 1px solid rgba(245,184,74,0.5); color: #f5b84a; border-radius: 5px; padding: 2px 7px; font-size: 11px; font-weight: 600; }
+#bBadgeRed { background: rgba(70, 15, 15, 0.9); border: 1px solid rgba(239,68,68,0.5); color: #f87171; border-radius: 5px; padding: 2px 7px; font-size: 11px; font-weight: 600; }
+#bCoverText { color: #d6d6dc; font-size: 11px; font-weight: 600; }
+
+#bPlay {
+    background: #c0303a; color: #ffffff; font-weight: 700; font-size: 13px; letter-spacing: 0.5px;
+    border: 1px solid #d94550; border-radius: 8px; padding: 9px 14px;
+}
+#bPlay:hover { background: #d23c46; }
+#bPlay:disabled { background: #18181b; border-color: #26262b; color: #6b6b74; }
+#bPlay[running="true"] { background: rgba(74, 222, 128, 0.1); border-color: rgba(74, 222, 128, 0.45); color: #4ade80; }
+#bIconButton { background: #121214; border: 1px solid #26262b; border-radius: 8px; padding: 8px; }
+#bIconButton:hover { border-color: #3a3a40; }
+
+#bDashed {
+    background: transparent; border: 1px dashed #2c2c32; border-radius: 11px; color: #8b8b93; padding: 16px;
+}
+#bDashed:hover { border-color: #45454c; background: #0d0d0f; }
+
+#bNewsView { background: #0e0e10; border: 1px solid #1d1d21; border-radius: 11px; padding: 18px; }
+
+/* status bar */
+#bStatusText { color: #4ade80; font-size: 12px; }
+#bStatusText[idle="true"] { color: #8b8b93; }
+#bFooterButton { background: transparent; border: none; color: #8b8b93; font-size: 11px; font-weight: 600; letter-spacing: 0.5px; padding: 4px 8px; }
+#bFooterButton:hover { color: #ededef; }
+QProgressBar { background: #1a1a1e; border: none; border-radius: 3px; max-height: 6px; min-height: 6px; }
+QProgressBar::chunk { background: #4ade80; border-radius: 3px; }
+
+/* toast */
+#bToast { background: #0e0e10; border: 1px solid #26262b; border-radius: 11px; }
+#bToastIcon { background: rgba(74, 222, 128, 0.12); border: 1px solid rgba(74, 222, 128, 0.4); border-radius: 9px; }
+#bToastTitle { font-weight: 700; }
+#bToastText { color: #b4b4bc; font-size: 12px; }
+
+QMenu { background: #121214; border: 1px solid #26262b; border-radius: 8px; padding: 5px; }
+QMenu::item { padding: 7px 22px 7px 10px; border-radius: 5px; color: #ededef; }
+QMenu::item:selected { background: #1f1f24; }
+QMenu::separator { height: 1px; background: #26262b; margin: 5px 6px; }
+QMenu::indicator { width: 0; }
+QToolTip { background: #121214; color: #ededef; border: 1px solid #26262b; padding: 4px 6px; }
+QScrollBar:vertical { background: transparent; width: 10px; margin: 2px; }
+QScrollBar::handle:vertical { background: #2a2a2f; border-radius: 4px; min-height: 30px; }
+QScrollBar::add-line, QScrollBar::sub-line { height: 0; }
 )";
 
-QToolButton* makeToolButton(const QString& text, const QString& tip, QWidget* parent)
+// Simple stroked line icons, drawn from small SVG bodies (24x24 grid).
+QIcon lineIcon(const QString& body, const QString& color = Color::Text, int size = 18, bool filled = false)
 {
-    auto* b = new QToolButton(parent);
-    b->setText(text);
-    b->setToolTip(tip);
-    b->setCursor(Qt::PointingHandCursor);
-    return b;
+    const int px = size * 2;
+    const QString svg =
+        QString(R"(<svg xmlns="http://www.w3.org/2000/svg" width="%1" height="%1" viewBox="0 0 24 24" fill="%2" stroke="%3" )"
+                R"(stroke-width="2" stroke-linecap="round" stroke-linejoin="round">%4</svg>)")
+            .arg(px)
+            .arg(filled ? color : QStringLiteral("none"), color, body);
+    QPixmap pm;
+    pm.loadFromData(svg.toUtf8(), "SVG");
+    pm.setDevicePixelRatio(2.0);
+    return QIcon(pm);
 }
+
+namespace Icon {
+const char* const Home = R"(<path d="M3 11 12 4l9 7"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>)";
+const char* const News = R"(<rect x="3" y="5" width="18" height="15" rx="2"/><path d="M7 9h10M7 13h10M7 17h6"/>)";
+const char* const Settings =
+    R"(<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M4.9 19.1 7 17M17 7l2.1-2.1"/>)";
+const char* const Grid = R"(<rect x="3" y="3" width="7" height="7" rx="1.5"/><rect x="14" y="3" width="7" height="7" rx="1.5"/><rect x="3" y="14" width="7" height="7" rx="1.5"/><rect x="14" y="14" width="7" height="7" rx="1.5"/>)";
+const char* const Folder = R"(<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>)";
+const char* const Sliders = R"(<path d="M4 7h9M17 7h3M4 17h3M11 17h9"/><circle cx="15" cy="7" r="2"/><circle cx="9" cy="17" r="2"/>)";
+const char* const Refresh = R"(<path d="M20 11a8 8 0 1 0-2.3 5.7"/><path d="M20 4v7h-7"/>)";
+const char* const Download = R"(<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><path d="M5 20h14"/>)";
+const char* const Chat = R"(<path d="M4 5h16v11H9l-5 4z"/>)";
+const char* const Globe = R"(<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>)";
+const char* const Info = R"(<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>)";
+const char* const Activity = R"(<path d="M3 12h4l3-7 4 14 3-7h4"/>)";
+const char* const Check = R"(<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>)";
+const char* const Play = R"(<path d="M8 5v14l11-7z"/>)";
+const char* const Chip = R"(<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>)";
+const char* const Bag = R"(<path d="M5 8h14l-1 12H6z"/><path d="M9 8V6a3 3 0 0 1 6 0v2"/>)";
+const char* const Close = R"(<path d="M6 6l12 12M18 6 6 18"/>)";
+const char* const Minimize = R"(<path d="M6 12h12"/>)";
+const char* const Maximize = R"(<rect x="6" y="6" width="12" height="12" rx="1"/>)";
+const char* const Restore = R"(<rect x="5" y="8" width="11" height="11" rx="1"/><path d="M8 8V5h11v11h-3"/>)";
+const char* const Chevron = R"(<path d="m7 10 5 5 5-5"/>)";
+}  // namespace Icon
+
+QString humanHours(int64_t seconds)
+{
+    const double hours = seconds / 3600.0;
+    if (hours < 0.1) {
+        return QObject::tr("%1 min").arg(qMax<int64_t>(seconds / 60, 0));
+    }
+    return QObject::tr("%1 hrs").arg(hours, 0, 'f', 1);
+}
+
+QLabel* makeLabel(const QString& text, const char* objectName, QWidget* parent)
+{
+    auto* l = new QLabel(text, parent);
+    l->setObjectName(objectName);
+    return l;
+}
+
+void restyle(QWidget* w)
+{
+    w->style()->unpolish(w);
+    w->style()->polish(w);
+}
+
+// Window root: paints the background and border, and turns its outer margin into resize handles.
+class FrameRoot : public QWidget {
+   public:
+    explicit FrameRoot(QWidget* parent) : QWidget(parent) { setMouseTracking(true); }
+    static constexpr int Margin = 5;
+
+    int margin() const { return window()->isMaximized() || window()->isFullScreen() ? 0 : Margin; }
+
+   protected:
+    void paintEvent(QPaintEvent*) override
+    {
+        QPainter p(this);
+        p.fillRect(rect(), QColor("#0e0e10"));
+        if (margin() > 0) {
+            p.setPen(QColor("#26262b"));
+            p.drawRect(rect().adjusted(0, 0, -1, -1));
+        }
+    }
+
+    Qt::Edges edgesAt(const QPoint& pos) const
+    {
+        const int m = margin();
+        if (m == 0) {
+            return {};
+        }
+        Qt::Edges e;
+        if (pos.x() <= m)
+            e |= Qt::LeftEdge;
+        if (pos.x() >= width() - m)
+            e |= Qt::RightEdge;
+        if (pos.y() <= m)
+            e |= Qt::TopEdge;
+        if (pos.y() >= height() - m)
+            e |= Qt::BottomEdge;
+        return e;
+    }
+
+    void mouseMoveEvent(QMouseEvent* event) override
+    {
+        const auto e = edgesAt(event->position().toPoint());
+        if (e == (Qt::LeftEdge | Qt::TopEdge) || e == (Qt::RightEdge | Qt::BottomEdge))
+            setCursor(Qt::SizeFDiagCursor);
+        else if (e == (Qt::RightEdge | Qt::TopEdge) || e == (Qt::LeftEdge | Qt::BottomEdge))
+            setCursor(Qt::SizeBDiagCursor);
+        else if (e & (Qt::LeftEdge | Qt::RightEdge))
+            setCursor(Qt::SizeHorCursor);
+        else if (e & (Qt::TopEdge | Qt::BottomEdge))
+            setCursor(Qt::SizeVerCursor);
+        else
+            unsetCursor();
+        QWidget::mouseMoveEvent(event);
+    }
+
+    void mousePressEvent(QMouseEvent* event) override
+    {
+        const auto e = edgesAt(event->position().toPoint());
+        if (event->button() == Qt::LeftButton && e && window()->windowHandle()) {
+            window()->windowHandle()->startSystemResize(e);
+            return;
+        }
+        QWidget::mousePressEvent(event);
+    }
+};
+
+// Title bar: drag to move, double-click to maximize.
+class DragBar : public QWidget {
+   public:
+    using QWidget::QWidget;
+
+   protected:
+    void mousePressEvent(QMouseEvent* event) override
+    {
+        if (event->button() == Qt::LeftButton && window()->windowHandle()) {
+            window()->windowHandle()->startSystemMove();
+            return;
+        }
+        QWidget::mousePressEvent(event);
+    }
+    void mouseDoubleClickEvent(QMouseEvent* event) override
+    {
+        if (event->button() == Qt::LeftButton) {
+            window()->isMaximized() ? window()->showNormal() : window()->showMaximized();
+        }
+    }
+};
+
+// Cover art with rounded top corners and a dark fade at the bottom for the overlay labels.
+class CoverWidget : public QWidget {
+   public:
+    explicit CoverWidget(QWidget* parent) : QWidget(parent), m_pixmap(":/beyonder/cover.png") {}
+
+   protected:
+    void paintEvent(QPaintEvent*) override
+    {
+        QPainter p(this);
+        p.setRenderHint(QPainter::Antialiasing);
+        p.setRenderHint(QPainter::SmoothPixmapTransform);
+
+        const QRectF r = rect();
+        const qreal radius = 10;
+        QPainterPath clip;
+        clip.moveTo(r.left(), r.bottom());
+        clip.lineTo(r.left(), r.top() + radius);
+        clip.quadTo(r.left(), r.top(), r.left() + radius, r.top());
+        clip.lineTo(r.right() - radius, r.top());
+        clip.quadTo(r.right(), r.top(), r.right(), r.top() + radius);
+        clip.lineTo(r.right(), r.bottom());
+        clip.closeSubpath();
+        p.setClipPath(clip);
+
+        p.fillRect(r, QColor("#050506"));
+        if (!m_pixmap.isNull()) {
+            const QSize scaled = m_pixmap.size().scaled(size(), Qt::KeepAspectRatioByExpanding);
+            const QRect target((width() - scaled.width()) / 2, (height() - scaled.height()) / 2, scaled.width(), scaled.height());
+            p.drawPixmap(target, m_pixmap);
+        }
+        QLinearGradient fade(r.topLeft(), r.bottomLeft());
+        fade.setColorAt(0.0, QColor(0, 0, 0, 90));
+        fade.setColorAt(0.18, QColor(0, 0, 0, 0));
+        fade.setColorAt(0.72, QColor(0, 0, 0, 0));
+        fade.setColorAt(1.0, QColor(10, 10, 11, 230));
+        p.fillRect(r, fade);
+    }
+
+   private:
+    QPixmap m_pixmap;
+};
+
 }  // namespace
+
+// =====================================================================================================================
+// Construction
+// =====================================================================================================================
 
 BeyonderWindow::BeyonderWindow(QWidget* parent) : QMainWindow(parent)
 {
     setAttribute(Qt::WA_DeleteOnClose);
+    setWindowFlags(Qt::Window | Qt::FramelessWindowHint);
     setWindowTitle(BuildConfig.LAUNCHER_DISPLAYNAME);
     setWindowIcon(APPLICATION->logo());
-    buildUi();
+    setMinimumSize(980, 620);
+
+    m_root = new FrameRoot(this);
+    m_root->setObjectName("bRoot");
+    m_root->setStyleSheet(s_styleSheet);
+    setCentralWidget(m_root);
+
+    auto* rootLayout = new QVBoxLayout(m_root);
+    rootLayout->setContentsMargins(FrameRoot::Margin, FrameRoot::Margin, FrameRoot::Margin, FrameRoot::Margin);
+    rootLayout->setSpacing(0);
+    rootLayout->addWidget(buildTitleBar());
+
+    auto* middle = new QWidget(m_root);
+    auto* middleLayout = new QHBoxLayout(middle);
+    middleLayout->setContentsMargins(0, 0, 0, 0);
+    middleLayout->setSpacing(0);
+    middleLayout->addWidget(buildSidebar());
+
+    m_pages = new QStackedWidget(middle);
+    m_pages->setObjectName("bContent");
+    m_pages->setAttribute(Qt::WA_StyledBackground);
+    m_pages->addWidget(buildLibraryPage());
+    m_pages->addWidget(buildNewsPage());
+    middleLayout->addWidget(m_pages, 1);
+    rootLayout->addWidget(middle, 1);
+
+    rootLayout->addWidget(buildStatusBar());
+    buildToast();
 
     const auto geometry = APPLICATION->settings()->get("BeyonderWindowGeometry").toString();
     if (geometry.isEmpty() || !restoreGeometry(QByteArray::fromBase64(geometry.toUtf8()))) {
-        resize(960, 600);
+        resize(1200, 760);
     }
 
     auto* accounts = APPLICATION->accounts();
@@ -111,118 +432,496 @@ BeyonderWindow::BeyonderWindow(QWidget* parent) : QMainWindow(parent)
     connect(accounts, &AccountList::defaultAccountChanged, this, &BeyonderWindow::rebuildAccountMenu);
     rebuildAccountMenu();
 
+    m_pingTimer = new QTimer(this);
+    m_pingTimer->setInterval(60 * 1000);
+    connect(m_pingTimer, &QTimer::timeout, this, &BeyonderWindow::pingServer);
+    m_pingTimer->start();
+
     watchInstance(findInstance());
+    updateNews();
     checkForUpdates();
 }
 
 BeyonderWindow::~BeyonderWindow() = default;
 
-void BeyonderWindow::buildUi()
+QWidget* BeyonderWindow::buildTitleBar()
 {
-    auto* root = new QWidget(this);
-    root->setObjectName("beyonderRoot");
-    root->setStyleSheet(s_styleSheet);
-    setCentralWidget(root);
+    auto* bar = new DragBar(m_root);
+    bar->setObjectName("bTitleBar");
+    bar->setAttribute(Qt::WA_StyledBackground);
+    bar->setFixedHeight(54);
+    auto* l = new QHBoxLayout(bar);
+    l->setContentsMargins(16, 0, 8, 0);
+    l->setSpacing(10);
 
-    auto* rootLayout = new QVBoxLayout(root);
-    rootLayout->setContentsMargins(0, 0, 0, 0);
-    rootLayout->setSpacing(0);
+    auto* logo = new QLabel(bar);
+    logo->setPixmap(APPLICATION->logo().pixmap(30, 30));
+    logo->setAttribute(Qt::WA_TransparentForMouseEvents);
+    l->addWidget(logo);
+    auto* brand = makeLabel("BEYONDER", "bBrand", bar);
+    brand->setAttribute(Qt::WA_TransparentForMouseEvents);
+    l->addWidget(brand);
+    auto* pill = makeLabel(tr("Launcher"), "bPill", bar);
+    pill->setAttribute(Qt::WA_TransparentForMouseEvents);
+    l->addWidget(pill, 0, Qt::AlignVCenter);
+    l->addStretch(1);
 
-    // Header
-    auto* header = new QWidget(root);
-    auto* headerLayout = new QHBoxLayout(header);
-    headerLayout->setContentsMargins(24, 18, 18, 12);
-    headerLayout->setSpacing(14);
+    m_titleUpdateButton = new QPushButton(bar);
+    m_titleUpdateButton->setObjectName("bGreenButton");
+    m_titleUpdateButton->setIcon(lineIcon(Icon::Download, "#052e12", 16));
+    m_titleUpdateButton->setCursor(Qt::PointingHandCursor);
+    m_titleUpdateButton->hide();
+    connect(m_titleUpdateButton, &QPushButton::clicked, this, [this] { startInstall(false); });
+    l->addWidget(m_titleUpdateButton);
 
-    m_logo = new QLabel(header);
-    m_logo->setPixmap(APPLICATION->logo().pixmap(56, 56));
-    headerLayout->addWidget(m_logo);
-
-    auto* titleBox = new QVBoxLayout();
-    titleBox->setSpacing(2);
-    auto* title = new QLabel(tr("BEYONDER"), header);
-    title->setObjectName("beyonderTitle");
-    auto* subtitle = new QLabel(tr("Above the gray fog, the path awaits."), header);
-    subtitle->setObjectName("beyonderSubtitle");
-    titleBox->addWidget(title);
-    titleBox->addWidget(subtitle);
-    headerLayout->addLayout(titleBox);
-    headerLayout->addStretch(1);
-
-    auto* folderButton = makeToolButton(tr("Game folder"), tr("Open the Beyonder game folder"), header);
-    connect(folderButton, &QToolButton::clicked, this, [this] {
-        if (auto* inst = findInstance()) {
-            DesktopServices::openPath(inst->gameRoot(), true);
-        }
-    });
-    auto* settingsButton = makeToolButton(tr("Settings"), tr("Launcher, Java and memory settings"), header);
-    connect(settingsButton, &QToolButton::clicked, this, [this] { APPLICATION->ShowGlobalSettings(this); });
-    auto* classicButton = makeToolButton(tr("Advanced"), tr("Open the full launcher (instances, mods, logs)"), header);
-    connect(classicButton, &QToolButton::clicked, this, &BeyonderWindow::classicViewRequested);
-
-    headerLayout->addWidget(folderButton);
-    headerLayout->addWidget(settingsButton);
-    headerLayout->addWidget(classicButton);
-    rootLayout->addWidget(header);
-
-    // Message of the day / news from the manifest
-    auto* body = new QWidget(root);
-    auto* bodyLayout = new QVBoxLayout(body);
-    bodyLayout->setContentsMargins(24, 6, 24, 18);
-    m_motd = new QTextBrowser(body);
-    m_motd->setObjectName("beyonderMotd");
-    m_motd->setOpenExternalLinks(true);
-    m_motd->setHtml(tr("<p>Contacting the gray fog…</p>"));
-    bodyLayout->addWidget(m_motd);
-    rootLayout->addWidget(body, 1);
-
-    // Bottom bar: account, status, play
-    auto* bottom = new QWidget(root);
-    bottom->setObjectName("beyonderBottom");
-    bottom->setAttribute(Qt::WA_StyledBackground);
-    auto* bottomLayout = new QHBoxLayout(bottom);
-    bottomLayout->setContentsMargins(24, 14, 24, 14);
-    bottomLayout->setSpacing(18);
-
-    m_accountButton = new QToolButton(bottom);
+    m_accountButton = new QToolButton(bar);
+    m_accountButton->setObjectName("bAccount");
     m_accountButton->setPopupMode(QToolButton::InstantPopup);
     m_accountButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
-    m_accountButton->setIconSize(QSize(28, 28));
+    m_accountButton->setIconSize(QSize(24, 24));
     m_accountButton->setCursor(Qt::PointingHandCursor);
     m_accountMenu = new QMenu(m_accountButton);
     m_accountButton->setMenu(m_accountMenu);
-    bottomLayout->addWidget(m_accountButton);
+    l->addWidget(m_accountButton);
+    l->addSpacing(8);
 
-    auto* statusBox = new QVBoxLayout();
-    statusBox->setSpacing(6);
-    m_statusLabel = new QLabel(bottom);
-    m_statusLabel->setObjectName("beyonderStatus");
-    m_statusLabel->setWordWrap(true);
-    m_progress = new QProgressBar(bottom);
-    m_progress->setTextVisible(false);
-    m_progress->setVisible(false);
-    m_versionLabel = new QLabel(bottom);
-    m_versionLabel->setObjectName("beyonderVersion");
-    statusBox->addWidget(m_statusLabel);
-    statusBox->addWidget(m_progress);
-    statusBox->addWidget(m_versionLabel);
-    bottomLayout->addLayout(statusBox, 1);
-
-    m_playButton = new QPushButton(tr("PLAY"), bottom);
-    m_playButton->setObjectName("beyonderPlay");
-    m_playButton->setCursor(Qt::PointingHandCursor);
-    m_playButton->setDefault(true);
-    connect(m_playButton, &QPushButton::clicked, this, &BeyonderWindow::onPlayClicked);
-    bottomLayout->addWidget(m_playButton);
-
-    rootLayout->addWidget(bottom);
+    auto winButton = [bar](const char* icon, const char* name) {
+        auto* b = new QToolButton(bar);
+        b->setObjectName(name);
+        b->setIcon(lineIcon(icon, "#b4b4bc", 16));
+        b->setIconSize(QSize(16, 16));
+        b->setFixedSize(40, 32);
+        return b;
+    };
+    auto* minimize = winButton(Icon::Minimize, "bWinButton");
+    connect(minimize, &QToolButton::clicked, this, &QWidget::showMinimized);
+    m_maximizeButton = winButton(Icon::Maximize, "bWinButton");
+    connect(m_maximizeButton, &QToolButton::clicked, this, [this] { isMaximized() ? showNormal() : showMaximized(); });
+    auto* close = winButton(Icon::Close, "bCloseButton");
+    connect(close, &QToolButton::clicked, this, &QWidget::close);
+    l->addWidget(minimize);
+    l->addWidget(m_maximizeButton);
+    l->addWidget(close);
+    return bar;
 }
+
+QWidget* BeyonderWindow::buildSidebar()
+{
+    auto* side = new QWidget(m_root);
+    side->setObjectName("bSidebar");
+    side->setAttribute(Qt::WA_StyledBackground);
+    side->setFixedWidth(232);
+    auto* l = new QVBoxLayout(side);
+    l->setContentsMargins(12, 16, 12, 14);
+    l->setSpacing(4);
+
+    l->addWidget(makeLabel(tr("MENU"), "bSection", side));
+    m_nav = new QButtonGroup(this);
+    m_nav->setExclusive(true);
+    auto navButton = [this, side, l](const char* icon, const QString& text) {
+        auto* b = new QPushButton(lineIcon(icon, "#c9c9d0", 18), "  " + text, side);
+        b->setObjectName("bNav");
+        b->setCheckable(true);
+        b->setCursor(Qt::PointingHandCursor);
+        b->setIconSize(QSize(18, 18));
+        l->addWidget(b);
+        return b;
+    };
+    auto* library = navButton(Icon::Home, tr("Library"));
+    auto* news = navButton(Icon::News, tr("News"));
+    m_nav->addButton(library, 0);
+    m_nav->addButton(news, 1);
+    library->setChecked(true);
+    connect(m_nav, &QButtonGroup::idClicked, this, [this](int id) { m_pages->setCurrentIndex(id); });
+
+    auto* settings = navButton(Icon::Settings, tr("Settings"));
+    settings->setCheckable(false);
+    connect(settings, &QPushButton::clicked, this, [this] { APPLICATION->ShowGlobalSettings(this); });
+    auto* advanced = navButton(Icon::Grid, tr("Advanced"));
+    advanced->setCheckable(false);
+    advanced->setToolTip(tr("Open the full launcher: instances, mods, logs"));
+    connect(advanced, &QPushButton::clicked, this, &BeyonderWindow::classicViewRequested);
+
+    auto* divider = new QFrame(side);
+    divider->setFixedHeight(1);
+    divider->setStyleSheet("background: #1d1d21;");
+    l->addSpacing(10);
+    l->addWidget(divider);
+    l->addSpacing(10);
+
+    // Quick launch
+    l->addWidget(makeLabel(tr("QUICK LAUNCH"), "bSection", side));
+    auto* quick = new QPushButton(side);
+    quick->setObjectName("bQuick");
+    quick->setCursor(Qt::PointingHandCursor);
+    quick->setMinimumHeight(58);
+    auto* ql = new QHBoxLayout(quick);
+    ql->setContentsMargins(8, 8, 8, 8);
+    ql->setSpacing(10);
+    auto* qIcon = new QLabel(quick);
+    qIcon->setPixmap(APPLICATION->logo().pixmap(34, 34));
+    ql->addWidget(qIcon);
+    auto* qText = new QVBoxLayout();
+    qText->setSpacing(1);
+    qText->addWidget(makeLabel(tr("Beyonder"), "bQuickTitle", quick));
+    auto* statusRow = new QHBoxLayout();
+    statusRow->setSpacing(5);
+    m_quickDot = new QLabel("●", quick);
+    m_quickDot->setStyleSheet(QString("color: %1; font-size: 9px;").arg(Color::Muted));
+    m_quickStatus = makeLabel(tr("Checking…"), "bQuickStatus", quick);
+    statusRow->addWidget(m_quickDot);
+    statusRow->addWidget(m_quickStatus, 1);
+    qText->addLayout(statusRow);
+    ql->addLayout(qText, 1);
+    for (auto* child : quick->findChildren<QLabel*>()) {
+        child->setAttribute(Qt::WA_TransparentForMouseEvents);
+    }
+    connect(quick, &QPushButton::clicked, this, &BeyonderWindow::onPlayClicked);
+    l->addWidget(quick);
+
+    l->addStretch(1);
+
+    // Community
+    l->addWidget(makeLabel(tr("COMMUNITY"), "bSection", side));
+    auto* community = new QHBoxLayout();
+    community->setSpacing(8);
+    m_discordButton = new QPushButton(lineIcon(Icon::Chat, "#c9c9d0", 16), tr(" Discord"), side);
+    m_websiteButton = new QPushButton(lineIcon(Icon::Globe, "#c9c9d0", 16), tr(" Website"), side);
+    for (auto* b : { m_discordButton, m_websiteButton }) {
+        b->setObjectName("bCommunity");
+        b->setCursor(Qt::PointingHandCursor);
+        b->setEnabled(false);
+        community->addWidget(b);
+    }
+    connect(m_discordButton, &QPushButton::clicked, this, [this] {
+        if (m_manifest && m_manifest->discordUrl.isValid())
+            QDesktopServices::openUrl(m_manifest->discordUrl);
+    });
+    connect(m_websiteButton, &QPushButton::clicked, this, [this] {
+        if (m_manifest && m_manifest->websiteUrl.isValid())
+            QDesktopServices::openUrl(m_manifest->websiteUrl);
+    });
+    l->addLayout(community);
+    l->addSpacing(10);
+
+    // Update box
+    m_sideUpdateButton = new QPushButton(side);
+    m_sideUpdateButton->setObjectName("bSideUpdate");
+    m_sideUpdateButton->setCursor(Qt::PointingHandCursor);
+    auto* ul = new QVBoxLayout(m_sideUpdateButton);
+    ul->setContentsMargins(10, 9, 10, 9);
+    ul->setSpacing(2);
+    auto* uTitleRow = new QHBoxLayout();
+    auto* uIcon = new QLabel(m_sideUpdateButton);
+    uIcon->setPixmap(lineIcon(Icon::Refresh, Color::Green, 16).pixmap(16, 16));
+    uTitleRow->addWidget(uIcon);
+    uTitleRow->addWidget(makeLabel(tr("Update Available"), "bSideUpdateTitle", m_sideUpdateButton), 1);
+    ul->addLayout(uTitleRow);
+    m_sideUpdateText = makeLabel(QString(), "bSideUpdateText", m_sideUpdateButton);
+    m_sideUpdateText->setWordWrap(true);
+    ul->addWidget(m_sideUpdateText);
+    for (auto* child : m_sideUpdateButton->findChildren<QLabel*>()) {
+        child->setAttribute(Qt::WA_TransparentForMouseEvents);
+    }
+    m_sideUpdateButton->setMinimumHeight(62);
+    m_sideUpdateButton->hide();
+    connect(m_sideUpdateButton, &QPushButton::clicked, this, [this] { startInstall(false); });
+    l->addWidget(m_sideUpdateButton);
+    return side;
+}
+
+QWidget* BeyonderWindow::buildLibraryPage()
+{
+    auto* page = new QWidget();
+    auto* l = new QVBoxLayout(page);
+    l->setContentsMargins(28, 24, 28, 20);
+    l->setSpacing(16);
+
+    auto* headerRow = new QHBoxLayout();
+    headerRow->setSpacing(10);
+    headerRow->addWidget(makeLabel(tr("Library"), "bH1", page));
+    headerRow->addWidget(makeLabel("1", "bCount", page), 0, Qt::AlignVCenter);
+    headerRow->addStretch(1);
+    l->addLayout(headerRow);
+    auto* sub = makeLabel(tr("The official Beyonder release, ready to install, configure, and launch."), "bSubtle", page);
+    l->addWidget(sub);
+    l->addSpacing(4);
+
+    // Server strip
+    auto* strip = new QFrame(page);
+    strip->setObjectName("bStrip");
+    auto* sl = new QHBoxLayout(strip);
+    sl->setContentsMargins(16, 12, 12, 12);
+    sl->setSpacing(10);
+    m_serverDot = new QLabel("●", strip);
+    m_serverLabel = makeLabel(tr("Checking server…"), "bStripText", strip);
+    sl->addWidget(m_serverDot);
+    sl->addWidget(m_serverLabel, 1);
+    m_accessLabel = new QLabel(strip);
+    sl->addWidget(m_accessLabel);
+    auto* refresh = new QPushButton(lineIcon(Icon::Refresh, "#d6d6dc", 14), tr(" Refresh"), strip);
+    refresh->setObjectName("bGhost");
+    refresh->setCursor(Qt::PointingHandCursor);
+    connect(refresh, &QPushButton::clicked, this, [this] {
+        checkForUpdates();
+        pingServer();
+    });
+    sl->addWidget(refresh);
+    l->addWidget(strip);
+
+    // Cards
+    auto* cards = new QHBoxLayout();
+    cards->setSpacing(18);
+    auto* gameCard = buildGameCard();
+    cards->addWidget(gameCard, 0, Qt::AlignTop);
+
+    m_communityCard = new QPushButton(page);
+    m_communityCard->setObjectName("bDashed");
+    m_communityCard->setCursor(Qt::PointingHandCursor);
+    m_communityCard->setFixedSize(gameCard->width(), gameCard->sizeHint().height());
+    auto* cl = new QVBoxLayout(m_communityCard);
+    cl->addStretch(1);
+    auto* cIcon = new QLabel(m_communityCard);
+    cIcon->setPixmap(lineIcon(Icon::Chat, "#b4b4bc", 28).pixmap(28, 28));
+    cIcon->setAlignment(Qt::AlignCenter);
+    cl->addWidget(cIcon);
+    auto* cTitle = makeLabel(tr("Join the Beyonder Discord"), "bCardTitle", m_communityCard);
+    cTitle->setAlignment(Qt::AlignCenter);
+    cTitle->setWordWrap(true);
+    cTitle->setStyleSheet("font-size: 13px;");
+    cl->addWidget(cTitle);
+    auto* cText = makeLabel(tr("Announcements, patch notes, whitelist help and faction recruitment."), "bCardSub", m_communityCard);
+    cText->setAlignment(Qt::AlignCenter);
+    cText->setWordWrap(true);
+    cl->addWidget(cText);
+    cl->addStretch(1);
+    for (auto* child : m_communityCard->findChildren<QLabel*>()) {
+        child->setAttribute(Qt::WA_TransparentForMouseEvents);
+    }
+    connect(m_communityCard, &QPushButton::clicked, m_discordButton, &QPushButton::click);
+    cards->addWidget(m_communityCard, 0, Qt::AlignTop);
+    cards->addStretch(1);
+    l->addLayout(cards);
+    l->addStretch(1);
+
+    auto* divider = new QFrame(page);
+    divider->setFixedHeight(1);
+    divider->setStyleSheet("background: #1d1d21;");
+    l->addWidget(divider);
+    auto* footer = new QHBoxLayout();
+    footer->setSpacing(8);
+    auto* fIcon = new QLabel(page);
+    fIcon->setPixmap(lineIcon(Icon::Check, Color::Muted, 14).pixmap(14, 14));
+    footer->addWidget(fIcon);
+    footer->addWidget(makeLabel(tr("Beyonder is an unofficial fan project inspired by Lord of the Mysteries."), "bSubtle", page), 1);
+    l->addLayout(footer);
+    return page;
+}
+
+QWidget* BeyonderWindow::buildGameCard()
+{
+    auto* card = new QFrame();
+    card->setObjectName("bCard");
+    card->setFixedWidth(272);
+    auto* l = new QVBoxLayout(card);
+    l->setContentsMargins(1, 1, 1, 14);
+    l->setSpacing(0);
+
+    m_cover = new CoverWidget(card);
+    m_cover->setFixedHeight(318);
+    auto* coverLayout = new QVBoxLayout(m_cover);
+    coverLayout->setContentsMargins(12, 12, 12, 12);
+    auto* top = new QHBoxLayout();
+    m_editionBadge = makeLabel(tr("Standard"), "bBadge", m_cover);
+    m_stateBadge = makeLabel(QString(), "bBadge", m_cover);
+    top->addWidget(m_editionBadge);
+    top->addStretch(1);
+    top->addWidget(m_stateBadge);
+    coverLayout->addLayout(top);
+    coverLayout->addStretch(1);
+    auto* bottom = new QHBoxLayout();
+    m_installedLabel = makeLabel(QString(), "bCoverText", m_cover);
+    m_playtimeBadge = makeLabel(QString(), "bBadge", m_cover);
+    bottom->addWidget(m_installedLabel);
+    bottom->addStretch(1);
+    bottom->addWidget(m_playtimeBadge);
+    coverLayout->addLayout(bottom);
+    l->addWidget(m_cover);
+
+    auto* body = new QVBoxLayout();
+    body->setContentsMargins(14, 14, 14, 0);
+    body->setSpacing(3);
+    m_cardTitle = makeLabel(tr("Beyonder"), "bCardTitle", card);
+    m_cardSubtitle = makeLabel(QString(), "bCardSub", card);
+    body->addWidget(m_cardTitle);
+    body->addWidget(m_cardSubtitle);
+    body->addSpacing(12);
+
+    auto* buttons = new QHBoxLayout();
+    buttons->setSpacing(8);
+    m_playButton = new QPushButton(tr("PLAY"), card);
+    m_playButton->setObjectName("bPlay");
+    m_playButton->setCursor(Qt::PointingHandCursor);
+    m_playButton->setIconSize(QSize(16, 16));
+    connect(m_playButton, &QPushButton::clicked, this, &BeyonderWindow::onPlayClicked);
+    buttons->addWidget(m_playButton, 1);
+
+    m_folderButton = new QToolButton(card);
+    m_folderButton->setObjectName("bIconButton");
+    m_folderButton->setIcon(lineIcon(Icon::Folder, "#d6d6dc", 18));
+    m_folderButton->setToolTip(tr("Open the game folder"));
+    m_folderButton->setCursor(Qt::PointingHandCursor);
+    connect(m_folderButton, &QToolButton::clicked, this, [this] {
+        if (auto* inst = findInstance())
+            DesktopServices::openPath(inst->gameRoot(), true);
+    });
+    buttons->addWidget(m_folderButton);
+
+    m_gameSettingsButton = new QToolButton(card);
+    m_gameSettingsButton->setObjectName("bIconButton");
+    m_gameSettingsButton->setIcon(lineIcon(Icon::Sliders, "#d6d6dc", 18));
+    m_gameSettingsButton->setToolTip(tr("Game settings: Java, memory, mods, logs"));
+    m_gameSettingsButton->setCursor(Qt::PointingHandCursor);
+    connect(m_gameSettingsButton, &QToolButton::clicked, this, [this] {
+        if (auto* inst = findInstance())
+            APPLICATION->showInstanceWindow(inst);
+    });
+    buttons->addWidget(m_gameSettingsButton);
+    body->addLayout(buttons);
+    l->addLayout(body);
+    return card;
+}
+
+QWidget* BeyonderWindow::buildNewsPage()
+{
+    auto* page = new QWidget();
+    auto* l = new QVBoxLayout(page);
+    l->setContentsMargins(28, 24, 28, 24);
+    l->setSpacing(14);
+    l->addWidget(makeLabel(tr("News"), "bH1", page));
+    l->addWidget(makeLabel(tr("Announcements and patch notes from the Beyonder team."), "bSubtle", page));
+    m_newsView = new QTextBrowser(page);
+    m_newsView->setObjectName("bNewsView");
+    m_newsView->setOpenExternalLinks(true);
+    m_newsView->document()->setDefaultStyleSheet(
+        "h2 { font-size: 18px; margin: 0 0 6px 0; } h3 { font-size: 15px; margin: 18px 0 2px 0; }"
+        ".date { color: #8b8b93; font-size: 11px; } a { color: #f07a80; } p { line-height: 140%; }");
+    l->addWidget(m_newsView, 1);
+    return page;
+}
+
+QWidget* BeyonderWindow::buildStatusBar()
+{
+    auto* bar = new QWidget(m_root);
+    bar->setObjectName("bStatusBar");
+    bar->setAttribute(Qt::WA_StyledBackground);
+    bar->setFixedHeight(36);
+    auto* l = new QHBoxLayout(bar);
+    l->setContentsMargins(16, 0, 4, 0);
+    l->setSpacing(8);
+
+    m_statusIcon = new QLabel(bar);
+    l->addWidget(m_statusIcon);
+    m_statusText = makeLabel(QString(), "bStatusText", bar);
+    l->addWidget(m_statusText, 1);
+
+    m_statusProgress = new QProgressBar(bar);
+    m_statusProgress->setTextVisible(false);
+    m_statusProgress->setFixedWidth(180);
+    m_statusProgress->hide();
+    l->addWidget(m_statusProgress);
+
+    m_ramButton = new QToolButton(bar);
+    m_ramButton->setObjectName("bFooterButton");
+    m_ramButton->setIcon(lineIcon(Icon::Chip, Color::Muted, 14));
+    m_ramButton->setToolButtonStyle(Qt::ToolButtonTextBesideIcon);
+    m_ramButton->setPopupMode(QToolButton::InstantPopup);
+    m_ramButton->setCursor(Qt::PointingHandCursor);
+    m_ramButton->setToolTip(tr("Memory given to Minecraft"));
+    m_ramMenu = new QMenu(m_ramButton);
+    m_ramButton->setMenu(m_ramMenu);
+    connect(m_ramMenu, &QMenu::aboutToShow, this, &BeyonderWindow::rebuildRamMenu);
+    l->addWidget(m_ramButton);
+
+    auto* version = makeLabel(QString("v%1").arg(BuildConfig.printableVersionString()), "bFooterButton", bar);
+    l->addWidget(version);
+
+    auto* grip = new QSizeGrip(bar);
+    grip->setFixedSize(14, 14);
+    l->addWidget(grip, 0, Qt::AlignBottom | Qt::AlignRight);
+    return bar;
+}
+
+void BeyonderWindow::buildToast()
+{
+    m_toast = new QFrame(m_root);
+    m_toast->setObjectName("bToast");
+    m_toast->setFixedWidth(330);
+    auto* shadow = new QGraphicsDropShadowEffect(m_toast);
+    shadow->setBlurRadius(32);
+    shadow->setOffset(0, 8);
+    shadow->setColor(QColor(0, 0, 0, 160));
+    m_toast->setGraphicsEffect(shadow);
+
+    auto* l = new QVBoxLayout(m_toast);
+    l->setContentsMargins(16, 14, 12, 14);
+    l->setSpacing(12);
+    auto* top = new QHBoxLayout();
+    top->setSpacing(12);
+    auto* icon = new QLabel(m_toast);
+    icon->setObjectName("bToastIcon");
+    icon->setFixedSize(34, 34);
+    icon->setAlignment(Qt::AlignCenter);
+    icon->setPixmap(lineIcon(Icon::Download, Color::Green, 18).pixmap(18, 18));
+    top->addWidget(icon, 0, Qt::AlignTop);
+    auto* texts = new QVBoxLayout();
+    texts->setSpacing(2);
+    texts->addWidget(makeLabel(tr("Update Available"), "bToastTitle", m_toast));
+    m_toastText = makeLabel(QString(), "bToastText", m_toast);
+    m_toastText->setWordWrap(true);
+    texts->addWidget(m_toastText);
+    top->addLayout(texts, 1);
+    auto* close = new QToolButton(m_toast);
+    close->setObjectName("bWinButton");
+    close->setIcon(lineIcon(Icon::Close, Color::Muted, 14));
+    close->setCursor(Qt::PointingHandCursor);
+    top->addWidget(close, 0, Qt::AlignTop);
+    l->addLayout(top);
+
+    auto* buttons = new QHBoxLayout();
+    buttons->setSpacing(8);
+    auto* now = new QPushButton(tr("Update Now"), m_toast);
+    now->setObjectName("bGreenButton");
+    now->setCursor(Qt::PointingHandCursor);
+    auto* later = new QPushButton(tr("Later"), m_toast);
+    later->setObjectName("bGhost");
+    later->setCursor(Qt::PointingHandCursor);
+    buttons->addWidget(now, 1);
+    buttons->addWidget(later);
+    l->addLayout(buttons);
+
+    auto dismiss = [this] {
+        if (m_manifest)
+            m_toastDismissedFor = m_manifest->packVersion;
+        showToast(false);
+    };
+    connect(close, &QToolButton::clicked, this, dismiss);
+    connect(later, &QPushButton::clicked, this, dismiss);
+    connect(now, &QPushButton::clicked, this, [this] {
+        showToast(false);
+        startInstall(false);
+    });
+    m_toast->hide();
+}
+
+// =====================================================================================================================
+// Window events
+// =====================================================================================================================
 
 void BeyonderWindow::closeEvent(QCloseEvent* event)
 {
     if (m_installTask && m_installTask->isRunning()) {
-        auto answer = QMessageBox::question(this, tr("Update in progress"),
-                                            tr("Beyonder is still being installed. Stop and close the launcher?"));
+        auto answer = QMessageBox::question(this, tr("Update in progress"), tr("Beyonder is still being installed. Stop and close the launcher?"));
         if (answer != QMessageBox::Yes) {
             event->ignore();
             return;
@@ -234,9 +933,47 @@ void BeyonderWindow::closeEvent(QCloseEvent* event)
     event->accept();
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
+void BeyonderWindow::changeEvent(QEvent* event)
+{
+    if (event->type() == QEvent::WindowStateChange && m_root) {
+        const int m = static_cast<FrameRoot*>(m_root)->margin();
+        m_root->layout()->setContentsMargins(m, m, m, m);
+        m_maximizeButton->setIcon(lineIcon(isMaximized() ? Icon::Restore : Icon::Maximize, "#b4b4bc", 16));
+        m_root->update();
+    }
+    QMainWindow::changeEvent(event);
+}
+
+void BeyonderWindow::resizeEvent(QResizeEvent* event)
+{
+    QMainWindow::resizeEvent(event);
+    positionToast();
+}
+
+void BeyonderWindow::positionToast()
+{
+    if (!m_toast)
+        return;
+    m_toast->adjustSize();
+    const int x = m_root->width() - m_toast->width() - 24;
+    const int y = m_root->height() - m_toast->height() - 36 - 20;
+    m_toast->move(x, y);
+}
+
+void BeyonderWindow::showToast(bool show)
+{
+    if (show) {
+        positionToast();
+        m_toast->show();
+        m_toast->raise();
+    } else {
+        m_toast->hide();
+    }
+}
+
+// =====================================================================================================================
 // Manifest / update check
-// ---------------------------------------------------------------------------------------------------------------------
+// =====================================================================================================================
 
 void BeyonderWindow::checkForUpdates()
 {
@@ -267,35 +1004,54 @@ void BeyonderWindow::onManifestDownloaded(const QByteArray& data)
     QString error;
     m_manifest = BeyonderManifest::parse(data, error);
     m_manifestError = error;
-    if (!m_manifest) {
-        m_motd->setHtml(tr("<h2>Something is wrong with the update server.</h2><p>%1</p>").arg(error.toHtmlEscaped()));
+
+    if (m_manifest && !m_manifest->minLauncherVersion.isEmpty() &&
+        Version(BuildConfig.versionString()) < Version(m_manifest->minLauncherVersion)) {
+        m_manifestError = tr("This launcher is too old for the current Beyonder release. Please download the latest launcher.");
+        m_manifest.reset();
     }
 
-    if (m_manifest) {
-        if (!m_manifest->motd.isEmpty()) {
-            m_motd->setHtml(m_manifest->motd);
-        } else {
-            m_motd->setHtml(tr("<h2>Welcome, Beyonder.</h2><p>Press Play to enter the world.</p>"));
-        }
-        if (!m_manifest->minLauncherVersion.isEmpty() &&
-            Version(BuildConfig.versionString()) < Version(m_manifest->minLauncherVersion)) {
-            m_manifestError = tr("This version of the launcher is too old for the current Beyonder release. "
-                                 "Please download the latest launcher.");
-            m_manifest.reset();
-        }
-    }
+    m_discordButton->setEnabled(m_manifest && m_manifest->discordUrl.isValid());
+    m_websiteButton->setEnabled(m_manifest && m_manifest->websiteUrl.isValid());
+    m_communityCard->setVisible(m_manifest && m_manifest->discordUrl.isValid());
+
+    updateNews();
     refreshState();
+    pingServer();
 }
 
 void BeyonderWindow::onManifestFailed(const QString& reason)
 {
     qWarning() << "Beyonder manifest download failed:" << reason;
     m_manifest.reset();
-    m_manifestError = tr("Couldn't reach the update server (%1).").arg(reason);
-    m_motd->setHtml(tr("<h2>The fog is thick tonight.</h2>"
-                       "<p>The launcher couldn't reach the Beyonder update server. Check your internet connection, "
-                       "then press Retry.</p>"));
+    m_manifestError = tr("Couldn't reach the update server.");
+    updateNews();
     refreshState();
+    m_serverStatus = ServerStatus::Unknown;
+    updateServerStrip();
+}
+
+void BeyonderWindow::updateNews()
+{
+    QString html;
+    if (!m_manifest) {
+        if (!m_manifestError.isEmpty()) {
+            html = tr("<h2>The fog is thick tonight.</h2><p>%1 Check your internet connection, then press Refresh on the Library page.</p>")
+                       .arg(m_manifestError.toHtmlEscaped());
+        } else {
+            html = tr("<p>Contacting the gray fog…</p>");
+        }
+    } else {
+        html = m_manifest->motd.isEmpty() ? tr("<h2>Welcome, Beyonder.</h2>") : m_manifest->motd;
+        for (const auto& item : m_manifest->news) {
+            html += QString("<h3>%1</h3>").arg(item.url.isValid() ? QString("<a href=\"%1\">%2</a>").arg(item.url.toString(), item.title.toHtmlEscaped())
+                                                                 : item.title.toHtmlEscaped());
+            if (!item.date.isEmpty())
+                html += QString("<div class=\"date\">%1</div>").arg(item.date.toHtmlEscaped());
+            html += item.body;
+        }
+    }
+    m_newsView->setHtml(html);
 }
 
 void BeyonderWindow::refreshState()
@@ -303,21 +1059,22 @@ void BeyonderWindow::refreshState()
     auto* inst = findInstance();
     watchInstance(inst);
 
+    if (m_state == State::Installing) {
+        updateUi();
+        return;
+    }
     if (inst && inst->isRunning()) {
         setState(State::Running);
         return;
     }
-
     if (!m_manifest) {
         if (inst) {
-            // Offline or broken manifest: still let people play what they have.
             setState(State::Ready, m_manifestError + " " + tr("You can still play the installed version."));
         } else {
             setState(State::Error, m_manifestError);
         }
         return;
     }
-
     if (!inst) {
         setState(State::NeedsInstall);
     } else if (inst->getManagedPackVersionID() != m_manifest->packVersion) {
@@ -330,68 +1087,318 @@ void BeyonderWindow::refreshState()
 void BeyonderWindow::setState(State state, const QString& message)
 {
     m_state = state;
-
-    auto* inst = findInstance();
-    const QString installed = inst ? inst->getManagedPackVersionID() : QString();
-    QString versionText = tr("Launcher %1").arg(BuildConfig.printableVersionString());
-    if (!installed.isEmpty()) {
-        versionText += " · " + tr("Beyonder %1").arg(installed);
+    m_statusMessage = message;
+    if (state != State::Installing) {
+        m_installPercent = -1;
     }
-    if (m_manifest && m_manifest->packVersion != installed) {
-        versionText += " · " + tr("latest %1").arg(m_manifest->packVersion);
-    }
-    m_versionLabel->setText(versionText);
-
-    bool playEnabled = true;
-    bool showProgress = false;
-    QString buttonText = tr("PLAY");
-    QString status = message;
-
-    switch (state) {
-        case State::Checking:
-            playEnabled = false;
-            showProgress = true;
-            m_progress->setRange(0, 0);
-            break;
-        case State::NeedsInstall:
-            buttonText = tr("INSTALL");
-            if (status.isEmpty())
-                status = tr("Beyonder isn't installed yet. It will download the game and mods.");
-            break;
-        case State::NeedsUpdate:
-            buttonText = tr("UPDATE");
-            if (status.isEmpty())
-                status = tr("A new version of Beyonder is available (%1).").arg(m_manifest->packVersion);
-            break;
-        case State::Ready:
-            if (status.isEmpty())
-                status = tr("Ready.");
-            break;
-        case State::Installing:
-            playEnabled = false;
-            showProgress = true;
-            buttonText = tr("INSTALLING");
-            break;
-        case State::Running:
-            playEnabled = false;
-            buttonText = tr("PLAYING");
-            if (status.isEmpty())
-                status = tr("Beyonder is running.");
-            break;
-        case State::Error:
-            buttonText = tr("RETRY");
-            break;
-    }
-
-    m_playButton->setText(buttonText);
-    m_playButton->setEnabled(playEnabled);
-    m_progress->setVisible(showProgress);
-    m_statusLabel->setText(status);
+    updateUi();
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
+// =====================================================================================================================
+// UI state
+// =====================================================================================================================
+
+void BeyonderWindow::updateUi()
+{
+    auto* inst = findInstance();
+    const QString installed = inst ? inst->getManagedPackVersionID() : QString();
+    const QString latest = m_manifest ? m_manifest->packVersion : QString();
+    const QString season = (m_manifest && !m_manifest->season.isEmpty()) ? m_manifest->season : tr("Standard");
+
+    QString playText = tr("PLAY");
+    QString playIcon = Icon::Play;
+    bool playEnabled = true;
+    bool running = false;
+    QString badgeText;
+    const char* badgeStyle = "bBadge";
+    QString subtitle;
+    QString quick;
+    QString dotColor = Color::Muted;
+    QString status = m_statusMessage;
+    bool busy = false;
+
+    switch (m_state) {
+        case State::Checking:
+            playText = tr("CHECKING…");
+            playEnabled = false;
+            badgeText = tr("Checking");
+            subtitle = tr("Checking for updates…");
+            quick = tr("Checking…");
+            busy = true;
+            break;
+        case State::NeedsInstall:
+            playText = tr("INSTALL");
+            playIcon = Icon::Download;
+            badgeText = tr("Not installed");
+            subtitle = tr("Not installed • %1").arg(latest);
+            quick = tr("Not installed");
+            if (status.isEmpty())
+                status = tr("Beyonder isn't installed yet.");
+            break;
+        case State::NeedsUpdate:
+            playText = tr("UPDATE");
+            playIcon = Icon::Download;
+            badgeText = tr("Update");
+            badgeStyle = "bBadgeAmber";
+            subtitle = tr("Update to %1 available").arg(latest);
+            quick = tr("Update available");
+            dotColor = Color::Amber;
+            if (status.isEmpty())
+                status = tr("Beyonder %1 is ready to install.").arg(latest);
+            break;
+        case State::Ready:
+            badgeText = tr("Ready");
+            badgeStyle = "bBadgeGreen";
+            subtitle = tr("Ready to play • %1").arg(season);
+            quick = tr("Ready");
+            dotColor = Color::Green;
+            break;
+        case State::Installing:
+            playText = m_installPercent >= 0 ? tr("INSTALLING %1%").arg(m_installPercent) : tr("INSTALLING…");
+            playEnabled = false;
+            badgeText = tr("Installing");
+            badgeStyle = "bBadgeAmber";
+            subtitle = tr("Downloading the game and mods…");
+            quick = tr("Installing…");
+            dotColor = Color::Amber;
+            busy = true;
+            break;
+        case State::Running:
+            playText = tr("Running");
+            playIcon = Icon::Check;
+            playEnabled = false;
+            running = true;
+            badgeText = tr("Running");
+            badgeStyle = "bBadgeGreen";
+            subtitle = tr("In game • %1").arg(season);
+            quick = tr("Running");
+            dotColor = Color::Green;
+            break;
+        case State::Error:
+            playText = tr("RETRY");
+            playIcon = Icon::Refresh;
+            badgeText = tr("Offline");
+            badgeStyle = "bBadgeRed";
+            subtitle = tr("Couldn't reach the update server");
+            quick = tr("Offline");
+            dotColor = Color::Red;
+            break;
+    }
+
+    // Game card
+    m_playButton->setText("  " + playText);
+    m_playButton->setIcon(lineIcon(playIcon, running ? Color::Green : (playEnabled ? "#ffffff" : "#6b6b74"), 16, playIcon == Icon::Play));
+    m_playButton->setEnabled(playEnabled);
+    m_playButton->setProperty("running", running);
+    restyle(m_playButton);
+    m_stateBadge->setText(badgeText);
+    m_stateBadge->setObjectName(badgeStyle);
+    restyle(m_stateBadge);
+    m_editionBadge->setText(latest.isEmpty() ? season : QString("%1 • %2").arg(season, latest));
+    m_installedLabel->setText(installed.isEmpty() ? tr("Not installed") : tr("Installed %1").arg(installed));
+    if (inst && inst->totalTimePlayed() > 0) {
+        m_playtimeBadge->setText(tr("%1 played").arg(humanHours(inst->totalTimePlayed())));
+        m_playtimeBadge->show();
+    } else {
+        m_playtimeBadge->hide();
+    }
+    m_cardSubtitle->setText(subtitle);
+    m_folderButton->setEnabled(inst != nullptr);
+    m_gameSettingsButton->setEnabled(inst != nullptr);
+
+    // Sidebar
+    m_quickStatus->setText(quick);
+    m_quickDot->setStyleSheet(QString("color: %1; font-size: 9px;").arg(dotColor));
+    const bool updateAvailable = m_state == State::NeedsUpdate;
+    m_sideUpdateButton->setVisible(updateAvailable);
+    m_sideUpdateText->setText(tr("Click to update to %1.").arg(latest));
+    m_titleUpdateButton->setVisible(updateAvailable);
+    m_titleUpdateButton->setText(tr(" Update %1").arg(latest));
+
+    // Status bar
+    QString statusLine = status;
+    if (m_state == State::Running) {
+        statusLine = tr("Running Beyonder • %1 MB RAM").arg(currentMaxMemoryMB());
+    } else if (m_state == State::Ready && status.isEmpty()) {
+        statusLine = tr("Ready • Beyonder %1").arg(installed);
+    }
+    m_statusText->setText(statusLine);
+    const bool idle = !(m_state == State::Running || m_state == State::Installing);
+    m_statusText->setProperty("idle", idle);
+    restyle(m_statusText);
+    m_statusIcon->setPixmap(lineIcon(Icon::Activity, idle ? Color::Muted : Color::Green, 14).pixmap(14, 14));
+    m_statusProgress->setVisible(busy);
+    if (busy && m_installPercent >= 0) {
+        m_statusProgress->setRange(0, 100);
+        m_statusProgress->setValue(m_installPercent);
+    } else if (busy) {
+        m_statusProgress->setRange(0, 0);
+    }
+    m_ramButton->setText(tr(" %1 MB").arg(currentMaxMemoryMB()));
+
+    // Toast: once per new version, until dismissed
+    if (updateAvailable && m_toastDismissedFor != latest) {
+        m_toastText->setText(tr("Beyonder %1 is ready to install.").arg(latest));
+        showToast(true);
+    } else if (!updateAvailable) {
+        showToast(false);
+    }
+
+    updateAccessLabel();
+}
+
+void BeyonderWindow::updateAccessLabel()
+{
+    auto account = APPLICATION->accounts()->defaultAccount();
+    QString text;
+    QString color;
+    if (!account) {
+        text = tr("Not signed in");
+        color = Color::Muted;
+    } else {
+        switch (account->accountState()) {
+            case AccountState::Online:
+            case AccountState::Unchecked:
+            case AccountState::Working:
+                text = tr("Signed in");
+                color = Color::Green;
+                break;
+            case AccountState::Offline:
+                text = tr("Offline");
+                color = Color::Amber;
+                break;
+            default:
+                text = tr("Sign-in expired");
+                color = Color::Amber;
+                break;
+        }
+    }
+    m_accessLabel->setText(text);
+    m_accessLabel->setStyleSheet(QString("color: %1; font-size: 12px; font-weight: 600; padding-right: 6px;").arg(color));
+}
+
+void BeyonderWindow::updateServerStrip()
+{
+    QString color = Color::Muted;
+    QString text;
+    const QString name = (m_manifest && !m_manifest->serverName.isEmpty()) ? m_manifest->serverName : tr("Beyonder");
+    switch (m_serverStatus) {
+        case ServerStatus::Unknown:
+            text = tr("%1 Server • status unknown").arg(name);
+            break;
+        case ServerStatus::Pinging:
+            text = tr("Checking %1 Server…").arg(name);
+            break;
+        case ServerStatus::NotConfigured:
+            text = tr("No server announced yet");
+            break;
+        case ServerStatus::Offline:
+            color = Color::Red;
+            text = tr("%1 Server Offline").arg(name);
+            break;
+        case ServerStatus::Online: {
+            color = Color::Green;
+            text = tr("%1 Server Online").arg(name);
+            if (m_serverOnline >= 0) {
+                text += m_serverMax > 0 ? tr(" • %1 / %2 players").arg(m_serverOnline).arg(m_serverMax) : tr(" • %1 players").arg(m_serverOnline);
+            }
+            if (m_serverLatency >= 0) {
+                text += tr(" (%1ms)").arg(m_serverLatency);
+            }
+            break;
+        }
+    }
+    m_serverDot->setStyleSheet(QString("color: %1; font-size: 10px;").arg(color));
+    m_serverLabel->setText(text);
+}
+
+void BeyonderWindow::pingServer()
+{
+    if (!m_manifest) {
+        return;
+    }
+    if (m_manifest->server.isEmpty()) {
+        m_serverStatus = ServerStatus::NotConfigured;
+        updateServerStrip();
+        return;
+    }
+    if (m_pingTask && m_pingTask->isRunning()) {
+        return;
+    }
+    const auto target = MinecraftTarget::parse(m_manifest->server, false);
+    if (m_serverStatus != ServerStatus::Online) {
+        m_serverStatus = ServerStatus::Pinging;
+        updateServerStrip();
+    }
+    m_pingTask.reset(new ServerPingTask(target.address, target.port));
+    auto* task = m_pingTask.get();
+    connect(task, &Task::succeeded, this, [this, task] {
+        m_serverStatus = ServerStatus::Online;
+        m_serverOnline = task->m_outputOnlinePlayers;
+        m_serverMax = task->m_outputMaxPlayers;
+        m_serverLatency = task->m_outputLatencyMs;
+        updateServerStrip();
+    });
+    connect(task, &Task::failed, this, [this](const QString& reason) {
+        qDebug() << "Beyonder server ping failed:" << reason;
+        m_serverStatus = ServerStatus::Offline;
+        updateServerStrip();
+    });
+    task->start();
+}
+
+// =====================================================================================================================
+// Memory
+// =====================================================================================================================
+
+int BeyonderWindow::currentMaxMemoryMB() const
+{
+    if (auto* inst = findInstance()) {
+        return inst->settings()->get("MaxMemAlloc").toInt();
+    }
+    return APPLICATION->settings()->get("MaxMemAlloc").toInt();
+}
+
+void BeyonderWindow::setMaxMemoryMB(int mb)
+{
+    if (auto* inst = findInstance()) {
+        auto* settings = inst->settings();
+        settings->set("OverrideMemory", true);
+        settings->set("MaxMemAlloc", mb);
+        settings->set("MinMemAlloc", std::min(1024, mb));
+    } else {
+        APPLICATION->settings()->set("MaxMemAlloc", mb);
+    }
+    updateUi();
+}
+
+void BeyonderWindow::rebuildRamMenu()
+{
+    m_ramMenu->clear();
+    const int current = currentMaxMemoryMB();
+    const int recommended = m_manifest ? m_manifest->recommendedMemoryMB : 0;
+    for (int gb : { 4, 6, 8, 10, 12, 16 }) {
+        const int mb = gb * 1024;
+        QString text = tr("%1 GB").arg(gb);
+        if (mb == recommended)
+            text += tr("  (recommended)");
+        auto* action = m_ramMenu->addAction(text);
+        action->setCheckable(true);
+        action->setChecked(mb == current);
+        connect(action, &QAction::triggered, this, [this, mb] { setMaxMemoryMB(mb); });
+    }
+    m_ramMenu->addSeparator();
+    connect(m_ramMenu->addAction(tr("More Java settings…")), &QAction::triggered, this, [this] {
+        if (auto* inst = findInstance())
+            APPLICATION->showInstanceWindow(inst, "settings");
+        else
+            APPLICATION->ShowGlobalSettings(this, "java-settings");
+    });
+}
+
+// =====================================================================================================================
 // Instance management
-// ---------------------------------------------------------------------------------------------------------------------
+// =====================================================================================================================
 
 MinecraftInstance* BeyonderWindow::findInstance() const
 {
@@ -421,10 +1428,14 @@ void BeyonderWindow::watchInstance(MinecraftInstance* instance)
 
 void BeyonderWindow::startInstall(bool launchAfter)
 {
+    if (m_state == State::Installing) {
+        return;
+    }
     if (!m_manifest) {
         checkForUpdates();
         return;
     }
+    showToast(false);
 
     auto* existing = findInstance();
 
@@ -448,14 +1459,19 @@ void BeyonderWindow::startInstall(bool launchAfter)
     importTask->setConfirmUpdate(false);
 
     m_installTask.reset(APPLICATION->instances()->wrapInstanceTask(importTask));
-    m_progress->setRange(0, 0);
     setState(State::Installing, existing ? tr("Updating Beyonder…") : tr("Installing Beyonder…"));
 
-    connect(m_installTask.get(), &Task::status, this, [this](const QString& status) { m_statusLabel->setText(status); });
+    connect(m_installTask.get(), &Task::status, this, [this](const QString& status) {
+        m_statusMessage = status;
+        updateUi();
+    });
     connect(m_installTask.get(), &Task::progress, this, [this](qint64 current, qint64 total) {
         if (total > 0) {
-            m_progress->setRange(0, 1000);
-            m_progress->setValue(static_cast<int>(current * 1000 / total));
+            const int percent = static_cast<int>(current * 100 / total);
+            if (percent != m_installPercent) {
+                m_installPercent = percent;
+                updateUi();
+            }
         }
     });
     connect(m_installTask.get(), &Task::succeeded, this, [this, launchAfter] {
@@ -486,7 +1502,7 @@ void BeyonderWindow::applyRecommendedSettings(MinecraftInstance* instance)
     if (!m_manifest || m_manifest->recommendedMemoryMB <= 0) {
         return;
     }
-    auto settings = instance->settings();
+    auto* settings = instance->settings();
     // Only set memory the first time; after that the player's own choice wins.
     if (settings->get("OverrideMemory").toBool()) {
         return;
@@ -496,9 +1512,9 @@ void BeyonderWindow::applyRecommendedSettings(MinecraftInstance* instance)
     settings->set("MinMemAlloc", std::min(1024, m_manifest->recommendedMemoryMB));
 }
 
-// ---------------------------------------------------------------------------------------------------------------------
+// =====================================================================================================================
 // Play / accounts
-// ---------------------------------------------------------------------------------------------------------------------
+// =====================================================================================================================
 
 void BeyonderWindow::onPlayClicked()
 {
@@ -589,10 +1605,13 @@ void BeyonderWindow::rebuildAccountMenu()
             [this] { APPLICATION->ShowGlobalSettings(this, "accounts"); });
 
     if (current) {
-        m_accountButton->setIcon(QIcon(current->getFace()));
-        m_accountButton->setText(current->profileName());
+        m_accountButton->setIcon(QIcon(current->getFace(48, 48)));
+        m_accountButton->setText(" " + current->profileName() + "  ");
     } else {
-        m_accountButton->setIcon(QIcon::fromTheme("noaccount"));
-        m_accountButton->setText(tr("Sign in"));
+        m_accountButton->setIcon(lineIcon(R"(<circle cx="12" cy="8" r="4"/><path d="M4 21c1.5-4 4.5-6 8-6s6.5 2 8 6"/>)", "#c9c9d0", 20));
+        m_accountButton->setText(tr(" Sign in  "));
+    }
+    if (m_accessLabel) {
+        updateAccessLabel();
     }
 }
