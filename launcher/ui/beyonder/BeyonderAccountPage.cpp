@@ -449,8 +449,11 @@ void BeyonderAccountPage::refresh()
     auto* t = new QVBoxLayout();
     t->setSpacing(1);
     t->addWidget(makeLabel(m_window->m_accessDiscordName.isEmpty() ? tr("No Discord account linked") : m_window->m_accessDiscordName, "sRowTitle", rowFrame));
-    if (!m_window->m_accessMessage.isEmpty())
-        t->addWidget(makeLabel(m_window->m_accessMessage, "sRowDesc", rowFrame));
+    if (!m_window->m_accessMessage.isEmpty()) {
+        auto* message = makeLabel(m_window->m_accessMessage, "sRowDesc", rowFrame);
+        message->setWordWrap(true);
+        t->addWidget(message);
+    }
     rl->addLayout(t, 1);
     auto* refreshButton = makeGhostButton(tr("Refresh"), Icon::Refresh, rowFrame);
     connect(refreshButton, &QPushButton::clicked, this, [this] { m_window->checkAccess(); });

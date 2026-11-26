@@ -1721,7 +1721,7 @@ void Application::ShowGlobalSettings(class QWidget* parent, QString openPage)
 
 bool Application::singleGameMode() const
 {
-    return !BuildConfig.BEYONDER_MANIFEST_URL.isEmpty() && !m_settings->get("BeyonderClassicView").toBool();
+    return !BuildConfig.BEYONDER_MANIFEST_URL.isEmpty();
 }
 
 BeyonderWindow* Application::showBeyonderWindow()

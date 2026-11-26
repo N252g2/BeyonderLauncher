@@ -361,10 +361,6 @@ QWidget* BeyonderWindow::buildSidebar()
     m_nav->addButton(settings, 3);
     library->setChecked(true);
     connect(m_nav, &QButtonGroup::idClicked, this, [this](int id) { m_pages->setCurrentIndex(id); });
-    auto* advanced = navButton(Icon::Grid, tr("Advanced"));
-    advanced->setCheckable(false);
-    advanced->setToolTip(tr("Open the full launcher: instances, mods, logs"));
-    connect(advanced, &QPushButton::clicked, this, &BeyonderWindow::classicViewRequested);
 
     auto* divider = new QFrame(side);
     divider->setFixedHeight(1);

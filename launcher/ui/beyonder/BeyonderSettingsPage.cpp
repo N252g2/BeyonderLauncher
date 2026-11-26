@@ -137,8 +137,6 @@ QWidget* BeyonderSettingsPage::buildGeneral()
                                  boundToggle("ShowConsole")));
     card.body->addWidget(makeRow(tr("Show game log after a crash"), tr("Opens the log automatically if Minecraft crashes."),
                                  boundToggle("ShowConsoleOnError")));
-    card.body->addWidget(makeRow(tr("Start in Advanced view"), tr("Opens the full multi-instance launcher instead of this home screen. Takes effect on restart."),
-                                 boundToggle("BeyonderClassicView")));
 
     auto* uninstall = makeDangerButton(tr("Uninstall Launcher"), Icon::Alert);
     connect(uninstall, &QPushButton::clicked, this, &BeyonderSettingsPage::uninstallLauncher);
@@ -258,7 +256,7 @@ QWidget* BeyonderSettingsPage::buildAppearance()
     backdrop.body->addWidget(makeRow(tr("Accent glow"), tr("A soft glow of your accent color behind the pages."), glow));
     auto* prismThemes = makeGhostButton(tr("Open"));
     connect(prismThemes, &QPushButton::clicked, this, [this] { APPLICATION->ShowGlobalSettings(m_window, "appearance-settings"); });
-    backdrop.body->addWidget(makeRow(tr("Advanced view theme"), tr("Theme and icons for the full launcher, logs and dialogs."), prismThemes));
+    backdrop.body->addWidget(makeRow(tr("Dialog theme"), tr("Theme and icons for pop-up windows such as the game log and Java settings."), prismThemes));
     return page(card.frame, backdrop.frame);
 }
 
@@ -375,14 +373,19 @@ QWidget* BeyonderSettingsPage::buildHardware()
     auto addRow = [&card](const QString& key, QLabel*& value) {
         value = makeLabel(QString(), "sValue", card.frame);
         value->setTextInteractionFlags(Qt::TextSelectableByMouse);
+        value->setWordWrap(true);
+        value->setAlignment(Qt::AlignRight | Qt::AlignVCenter);
+        value->setSizePolicy(QSizePolicy::Ignored, QSizePolicy::Preferred);
         auto* row = new QFrame(card.frame);
         row->setObjectName("sRow");
         auto* l = new QHBoxLayout(row);
         l->setContentsMargins(16, 12, 16, 12);
-        l->addWidget(makeLabel(key, "sKey", row));
-        l->addStretch(1);
+        l->setSpacing(16);
+        auto* keyLabel = makeLabel(key, "sKey", row);
+        keyLabel->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+        l->addWidget(keyLabel, 0, Qt::AlignTop);
         value->setParent(row);
-        l->addWidget(value);
+        l->addWidget(value, 1);
         card.body->addWidget(row);
     };
     addRow(tr("Processor"), m_cpu);
@@ -500,9 +503,18 @@ void BeyonderSettingsPage::refresh()
     if (m_stack->currentIndex() == 5) {
         if (m_cpu->text().isEmpty()) {
             m_cpu->setText(tr("%1 (%n threads)", "", QThread::idealThreadCount()).arg(HardwareInfo::cpuInfo()));
-            QStringList gpus = HardwareInfo::gpuInfo();
-            gpus.removeIf([](const QString& g) { return g.contains("failed", Qt::CaseInsensitive) || g.trimmed().isEmpty(); });
-            m_gpu->setText(gpus.isEmpty() ? tr("Unknown") : gpus.join(", "));
+            QStringList gpus;
+            for (QString g : HardwareInfo::gpuInfo()) {
+                g = g.trimmed();
+                if (g.startsWith("GPU:", Qt::CaseInsensitive))
+                    g = g.mid(4).trimmed();
+                // Skip errors and Windows' fallback adapter; list each real GPU once.
+                if (g.isEmpty() || g.contains("failed", Qt::CaseInsensitive) || g.contains("Basic Render Driver", Qt::CaseInsensitive) ||
+                    g.contains("Basic Display Adapter", Qt::CaseInsensitive) || gpus.contains(g))
+                    continue;
+                gpus.append(g);
+            }
+            m_gpu->setText(gpus.isEmpty() ? tr("Unknown") : gpus.join("\n"));
         }
         m_ram->setText(ram > 0 ? tr("%1 GB").arg(ram / 1024.0, 0, 'f', 1) : tr("Unknown"));
         const QString gameDir = inst ? inst->gameRoot() : QDir::currentPath();

@@ -295,8 +295,11 @@ Card makeCard(const QString& title, const QString& subtitle, QWidget* action, QW
         auto* header = new QHBoxLayout();
         auto* texts = new QVBoxLayout();
         texts->setSpacing(2);
-        if (!title.isEmpty())
-            texts->addWidget(makeLabel(title, "sCardTitle", frame));
+        if (!title.isEmpty()) {
+            auto* t = makeLabel(title, "sCardTitle", frame);
+            t->setWordWrap(true);
+            texts->addWidget(t);
+        }
         if (!subtitle.isEmpty()) {
             auto* sub = makeLabel(subtitle, "sCardSub", frame);
             sub->setWordWrap(true);
@@ -324,7 +327,9 @@ QFrame* makeRow(const QString& title, const QString& description, QWidget* contr
     l->setSpacing(16);
     auto* texts = new QVBoxLayout();
     texts->setSpacing(2);
-    texts->addWidget(makeLabel(title, "sRowTitle", row));
+    auto* t = makeLabel(title, "sRowTitle", row);
+    t->setWordWrap(true);
+    texts->addWidget(t);
     if (!description.isEmpty()) {
         auto* d = makeLabel(description, "sRowDesc", row);
         d->setWordWrap(true);
