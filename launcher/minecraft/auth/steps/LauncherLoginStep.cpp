@@ -1,5 +1,7 @@
 #include "LauncherLoginStep.h"
 
+#include "BuildConfig.h"
+
 #include <QNetworkRequest>
 #include <QUrl>
 
@@ -56,6 +58,14 @@ void LauncherLoginStep::onRequestDone(QByteArray* response)
     qCDebug(authCredentials()) << *response;
     if (m_request->error() != QNetworkReply::NoError) {
         qWarning() << "Reply error:" << m_request->error();
+        // Beyonder Launcher: Minecraft services answer 403 for app IDs Mojang hasn't allow-listed yet.
+        if (m_request->replyStatusCode() == 403) {
+            emit finished(AccountTaskState::STATE_FAILED_HARD,
+                          tr("Minecraft sign-in for %1 is waiting for approval from Mojang. Your Microsoft account is fine; "
+                             "please try again later.")
+                              .arg(BuildConfig.LAUNCHER_DISPLAYNAME));
+            return;
+        }
         if (Net::isApplicationError(m_request->error()) && !Net::isServerError(m_request->error())) {
             emit finished(AccountTaskState::STATE_FAILED_SOFT,
                           tr("Failed to get Minecraft access token: %1").arg(m_request->errorString()));
