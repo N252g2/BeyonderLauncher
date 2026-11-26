@@ -1,7 +1,7 @@
 {
   "formatVersion": 1,
-  "packVersion": "0.1.0",
-  "mrpackUrl": "https://n252g2.github.io/BeyonderLauncher/pack/Beyonder-0.1.0.mrpack",
+  "packVersion": "0.1.1",
+  "mrpackUrl": "https://n252g2.github.io/BeyonderLauncher/pack/Beyonder-0.1.1.mrpack",
   "server": "",
   "serverName": "Tingen",
   "season": "Season 0",
@@ -13,9 +13,13 @@
   "motd": "<h2>Season 0: Tingen</h2><p>Starter pack: Minecraft 1.21.1 with NeoForge. Mods and the server are coming soon.</p>",
   "news": [
     {
-      "title": "Closed testing begins",
+      "title": "Update test: launcher 0.1.1 and pack 0.1.1",
       "date": "2026-11-26",
-      "body": "<p>Whitelist applications are open on Discord.</p>"
+      "body": "<p>If you can read this, your launcher picked up the new manifest. You should see a launcher update notice and a game update.</p>"
     }
-  ]
+  ],
+  "launcher": {
+    "version": "0.1.1",
+    "url": "https://github.com/N252g2/BeyonderLauncher/releases/latest"
+  }
 }
