@@ -189,7 +189,7 @@ QString MSAStep::describe()
 void MSAStep::perform()
 {
     if (m_clientId.isEmpty()) {
-        emit finished(AccountTaskState::STATE_FAILED_HARD,
+        emit finished(AccountTaskState::STATE_FAILED_SOFT,
                       tr("This build of %1 has no Microsoft client ID. Build it with -DLauncher_MSA_CLIENT_ID=<your Azure app ID>.")
                           .arg(BuildConfig.LAUNCHER_DISPLAYNAME));
         return;

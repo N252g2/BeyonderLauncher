@@ -73,14 +73,15 @@ void LauncherLoginStep::onRequestDone(QByteArray* response)
         qWarning() << "Reply error:" << m_request->error();
         // Beyonder Launcher: /launcher/login can refuse app IDs that Mojang approved for login_with_xbox; try that next.
         if (m_request->replyStatusCode() == 403 && !m_useLoginWithXbox) {
-            qDebug() << "launcher/login refused this app ID, retrying with login_with_xbox";
+            qWarning() << "launcher/login refused this app ID, retrying with login_with_xbox:" << *response;
             m_useLoginWithXbox = true;
             sendRequest();
             return;
         }
         // Both endpoints answer 403 for app IDs Mojang hasn't allow-listed yet.
         if (m_request->replyStatusCode() == 403) {
-            emit finished(AccountTaskState::STATE_FAILED_HARD,
+            qWarning() << "Minecraft services refused this app ID:" << *response;
+            emit finished(AccountTaskState::STATE_FAILED_SOFT,
                           tr("Minecraft sign-in for %1 is waiting for approval from Mojang. Your Microsoft account is fine; "
                              "please try again later.")
                               .arg(BuildConfig.LAUNCHER_DISPLAYNAME));
