@@ -3,7 +3,7 @@
   <id>@Launcher_AppID@</id>
   <name>@Launcher_DisplayName@</name>
   <summary>Launcher for Beyonder, a Lord of the Mysteries-inspired Minecraft MMORPG</summary>
-  <developer id="io.github.beyonderlauncher">
+  <developer id="io.github.n252g2">
     <name>Beyonder Launcher Contributors</name>
   </developer>
   <metadata_license>CC0-1.0</metadata_license>

@@ -124,6 +124,18 @@ class Config {
     QString NEWS_RSS_URL;
 
     /**
+     * Beyonder Launcher single-game mode.
+     * URL of the JSON manifest describing the current Beyonder modpack and server.
+     * When empty, the launcher behaves like a normal multi-instance launcher.
+     */
+    QString BEYONDER_MANIFEST_URL;
+
+    /**
+     * Managed pack ID stored on the Beyonder instance, used to find it again.
+     */
+    QString BEYONDER_PACK_ID;
+
+    /**
      * URL that gets opened when the user clicks "More News"
      */
     QString NEWS_OPEN_URL;

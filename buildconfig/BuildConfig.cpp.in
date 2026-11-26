@@ -105,6 +105,8 @@ Config::Config()
     }
 
     NEWS_RSS_URL = "@Launcher_NEWS_RSS_URL@";
+    BEYONDER_MANIFEST_URL = "@Beyonder_MANIFEST_URL@";
+    BEYONDER_PACK_ID = "@Beyonder_PACK_ID@";
     NEWS_OPEN_URL = "@Launcher_NEWS_OPEN_URL@";
     WIKI_URL = "@Launcher_WIKI_URL@";
     HELP_URL = "@Launcher_HELP_URL@";

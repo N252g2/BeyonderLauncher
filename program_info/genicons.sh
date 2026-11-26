@@ -1,6 +1,6 @@
 #!/bin/bash
 
-LAUNCHER_APPID="io.github.beyonderlauncher.BeyonderLauncher"
+LAUNCHER_APPID="io.github.n252g2.BeyonderLauncher"
 
 svg2png() {
     input_file="$1"

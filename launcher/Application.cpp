@@ -50,6 +50,7 @@
 #include "tools/GenericProfiler.h"
 #include "ui/InstanceWindow.h"
 #include "ui/MainWindow.h"
+#include "ui/beyonder/BeyonderWindow.h"
 #include "ui/ToolTipFilter.h"
 #include "ui/ViewLogWindow.h"
 
@@ -822,6 +823,9 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
         // Window state and geometry
         m_settings->registerSetting("MainWindowState", "");
         m_settings->registerSetting("MainWindowGeometry", "");
+        m_settings->registerSetting("BeyonderWindowGeometry", "");
+        // Start in the classic multi-instance window instead of the Beyonder home screen
+        m_settings->registerSetting("BeyonderClassicView", false);
 
         m_settings->registerSetting("ConsoleWindowState", "");
         m_settings->registerSetting("ConsoleWindowGeometry", "");
@@ -1059,7 +1063,13 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
     }
 
 #ifdef Q_OS_MACOS
-    connect(this, &Application::clickedOnDock, this, [this]() { this->showMainWindow(); });
+    connect(this, &Application::clickedOnDock, this, [this]() {
+        if (singleGameMode() && !m_mainWindow) {
+            this->showBeyonderWindow();
+        } else {
+            this->showMainWindow();
+        }
+    });
 #endif
 
     connect(this, &Application::aboutToQuit, this, [this]() {
@@ -1406,10 +1416,15 @@ void Application::performMainStartupAction()
             return;
         }
     }
-    if (!m_mainWindow) {
-        // normal main window
-        showMainWindow(false);
-        qDebug() << "<> Main window shown.";
+    if (!m_mainWindow && !m_beyonderWindow) {
+        if (singleGameMode()) {
+            showBeyonderWindow();
+            qDebug() << "<> Beyonder window shown.";
+        } else {
+            // normal main window
+            showMainWindow(false);
+            qDebug() << "<> Main window shown.";
+        }
     }
 
     // initialize the updater
@@ -1420,7 +1435,7 @@ void Application::performMainStartupAction()
         m_updater.reset(new MacSparkleUpdater());
 #endif
 #else
-        m_updater.reset(new PrismExternalUpdater(m_mainWindow, m_rootPath, m_dataPath));
+        m_updater.reset(new PrismExternalUpdater(m_mainWindow ? static_cast<QWidget*>(m_mainWindow) : static_cast<QWidget*>(m_beyonderWindow), m_rootPath, m_dataPath));
 #endif
         qDebug() << "<> Updater started.";
     }
@@ -1581,6 +1596,8 @@ bool Application::launch(MinecraftInstance* instance,
             controller->setParentWidget(instance->window());
         } else if (m_mainWindow != nullptr) {
             controller->setParentWidget(m_mainWindow);
+        } else if (m_beyonderWindow != nullptr) {
+            controller->setParentWidget(m_beyonderWindow);
         }
         connect(controller, &LaunchController::finished, this, &Application::controllerFinished);
         addRunningInstance();
@@ -1689,6 +1706,30 @@ void Application::ShowGlobalSettings(class QWidget* parent, QString openPage)
         connect(&dlg, &PageDialog::applied, this, &Application::globalSettingsApplied);
         dlg.exec();
     }
+}
+
+bool Application::singleGameMode() const
+{
+    return !BuildConfig.BEYONDER_MANIFEST_URL.isEmpty() && !m_settings->get("BeyonderClassicView").toBool();
+}
+
+BeyonderWindow* Application::showBeyonderWindow()
+{
+    if (m_beyonderWindow) {
+        m_beyonderWindow->setWindowState(m_beyonderWindow->windowState() & ~Qt::WindowMinimized);
+        m_beyonderWindow->raise();
+        m_beyonderWindow->activateWindow();
+        return m_beyonderWindow;
+    }
+    m_beyonderWindow = new BeyonderWindow();
+    m_beyonderWindow->show();
+    connect(m_beyonderWindow, &BeyonderWindow::classicViewRequested, this, [this] { showMainWindow(false); });
+    connect(m_beyonderWindow, &BeyonderWindow::isClosing, this, [this] {
+        m_beyonderWindow = nullptr;
+        on_windowClose();
+    });
+    m_openWindows++;
+    return m_beyonderWindow;
 }
 
 MainWindow* Application::showMainWindow(bool minimized)

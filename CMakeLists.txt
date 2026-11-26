@@ -177,8 +177,12 @@ include(CTest)
 
 ######## Set URLs ########
 # Beyonder Launcher: all fork-owned links hang off this site (GitHub Pages of the fork).
-set(Beyonder_GIT_URL "https://github.com/beyonderlauncher/BeyonderLauncher" CACHE STRING "GitHub repository of the Beyonder Launcher fork")
-set(Beyonder_SITE_URL "https://beyonderlauncher.github.io/BeyonderLauncher" CACHE STRING "Base URL of the Beyonder Launcher website")
+set(Beyonder_GIT_URL "https://github.com/N252g2/BeyonderLauncher" CACHE STRING "GitHub repository of the Beyonder Launcher fork")
+set(Beyonder_SITE_URL "https://n252g2.github.io/BeyonderLauncher" CACHE STRING "Base URL of the Beyonder Launcher website")
+
+# Single-game mode: the launcher opens straight to Beyonder. Set Beyonder_MANIFEST_URL to "" for a classic Prism-style launcher.
+set(Beyonder_MANIFEST_URL "${Beyonder_SITE_URL}/pack/manifest.json" CACHE STRING "URL of the Beyonder pack manifest (JSON)")
+set(Beyonder_PACK_ID "beyonder" CACHE STRING "Managed pack ID used for the Beyonder instance")
 
 set(Launcher_NEWS_RSS_URL "${Beyonder_SITE_URL}/feed.xml" CACHE STRING "URL to fetch the launcher's news RSS feed from.")
 set(Launcher_NEWS_OPEN_URL "${Beyonder_SITE_URL}/news" CACHE STRING "URL that gets opened when the user clicks 'More News'")

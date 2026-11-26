@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="program_info/io.github.beyonderlauncher.BeyonderLauncher.svg" alt="Beyonder Launcher logo" width="128"/>
+  <img src="program_info/io.github.n252g2.BeyonderLauncher.svg" alt="Beyonder Launcher logo" width="128"/>
 </p>
 
 <h1 align="center">Beyonder Launcher</h1>
@@ -38,6 +38,29 @@ Microsoft login needs your **own** Azure application, and Mojang has to allow-li
 1. Register an app in the Azure portal (Microsoft Entra ID → App registrations). Supported account types: *Personal Microsoft accounts only*. Under Authentication, enable *Allow public client flows*.
 2. Apply for Minecraft API access for that app ID using the form linked from Minecraft's help article on Java Edition game service API access. Until it's approved, sign-in fails with a 403.
 3. Add the app ID as a repository secret named `MSA_CLIENT_ID` (Settings → Secrets and variables → Actions). For local builds pass `-DLauncher_MSA_CLIENT_ID=<id>`.
+
+### Pack manifest (single-game mode)
+
+On start-up the launcher downloads `Beyonder_MANIFEST_URL` (default: `docs/pack/manifest.json` served by GitHub Pages) and compares `packVersion` with the installed Beyonder instance:
+
+```json
+{
+  "formatVersion": 1,
+  "packVersion": "0.1.0",
+  "mrpackUrl": "https://github.com/<you>/BeyonderPack/releases/download/v0.1.0/Beyonder-0.1.0.mrpack",
+  "server": "play.example.net",
+  "recommendedMemoryMB": 6144,
+  "minLauncherVersion": "12.0.0",
+  "motd": "<h2>Season 0: Tingen</h2><p>Shown on the home screen.</p>"
+}
+```
+
+- `mrpackUrl`: a Modrinth-format modpack (`.mrpack`). Updates are applied in place; unchanged files aren't downloaded again.
+- `server`: joined automatically when the player presses Play. Leave it empty to just open the title screen.
+- `recommendedMemoryMB`: applied once, the first time the pack is installed. After that, the player's own setting wins.
+- To release an update: upload the new `.mrpack`, then change `packVersion` and `mrpackUrl` and push.
+
+Setting `BeyonderClassicView=true` in the launcher config, or building with `-DBeyonder_MANIFEST_URL=""`, gives you the normal multi-instance launcher. The **Advanced** button on the home screen also opens it.
 
 ### Fork settings
 

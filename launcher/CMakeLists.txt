@@ -181,6 +181,10 @@ set(NEWS_SOURCES
     news/NewsChecker.cpp
     news/NewsEntry.h
     news/NewsEntry.cpp
+
+    # Beyonder single-game mode
+    beyonder/BeyonderManifest.h
+    beyonder/BeyonderManifest.cpp
 )
 
 # Icon interface
@@ -806,6 +810,8 @@ SET(LAUNCHER_SOURCES
     # GUI - windows
     ui/MainWindow.h
     ui/MainWindow.cpp
+    ui/beyonder/BeyonderWindow.h
+    ui/beyonder/BeyonderWindow.cpp
     ui/InstanceWindow.h
     ui/InstanceWindow.cpp
     ui/ViewLogWindow.h

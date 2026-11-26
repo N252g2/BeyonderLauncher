@@ -55,6 +55,7 @@ class LaunchController;
 class LocalPeer;
 class InstanceWindow;
 class MainWindow;
+class BeyonderWindow;
 class ViewLogWindow;
 class GenericPageProvider;
 class QFile;
@@ -185,6 +186,9 @@ class Application : public QApplication {
 
     InstanceWindow* showInstanceWindow(MinecraftInstance* instance, const QString& page = QString());
     MainWindow* showMainWindow(bool minimized = false);
+    //! Beyonder single-game home screen (used when BuildConfig.BEYONDER_MANIFEST_URL is set)
+    BeyonderWindow* showBeyonderWindow();
+    bool singleGameMode() const;
     ViewLogWindow* showLogWindow();
 
     void updateIsRunning(bool running);
@@ -277,6 +281,7 @@ class Application : public QApplication {
 
     // main window, if any
     MainWindow* m_mainWindow = nullptr;
+    BeyonderWindow* m_beyonderWindow = nullptr;
 
     // log window, if any
     ViewLogWindow* m_viewLogWindow = nullptr;

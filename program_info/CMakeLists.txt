@@ -10,8 +10,8 @@ endif()
 
 set(Launcher_CommonName "BeyonderLauncher")
 set(Launcher_DisplayName "Beyonder Launcher")
-set(Launcher_AppID "io.github.beyonderlauncher.BeyonderLauncher")
-set(Launcher_Domain "beyonderlauncher.github.io")
+set(Launcher_AppID "io.github.n252g2.BeyonderLauncher")
+set(Launcher_Domain "n252g2.github.io")
 set(Launcher_Git "${Beyonder_GIT_URL}")
 
 set(Launcher_Name "${Launcher_CommonName}" PARENT_SCOPE)
