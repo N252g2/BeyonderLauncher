@@ -47,8 +47,6 @@ jobs:
           mv BeyonderLauncher-Linux-Qt6-Portable*/BeyonderLauncher-portable.tar.gz BeyonderLauncher-Linux-Qt6-Portable-${{ env.VERSION }}.tar.gz
           mv BeyonderLauncher-*.AppImage/BeyonderLauncher-*-x86_64.AppImage BeyonderLauncher-Linux-x86_64.AppImage
           mv BeyonderLauncher-*.AppImage.zsync/BeyonderLauncher-*-x86_64.AppImage.zsync BeyonderLauncher-Linux-x86_64.AppImage.zsync
-          mv BeyonderLauncher-macOS*/BeyonderLauncher.zip BeyonderLauncher-macOS-${{ env.VERSION }}.zip
-          mv BeyonderLauncher-macOS*/BeyonderLauncher.dmg BeyonderLauncher-macOS-${{ env.VERSION }}.dmg
 
           tar --exclude='.git' -czf BeyonderLauncher-${{ env.VERSION }}.tar.gz BeyonderLauncher-${{ env.VERSION }}
 
@@ -80,6 +78,4 @@ jobs:
             BeyonderLauncher-Windows-MSVC-${{ env.VERSION }}.zip
             BeyonderLauncher-Windows-MSVC-Portable-${{ env.VERSION }}.zip
             BeyonderLauncher-Windows-MSVC-Setup-${{ env.VERSION }}.exe
-            BeyonderLauncher-macOS-${{ env.VERSION }}.zip
-            BeyonderLauncher-macOS-${{ env.VERSION }}.dmg
             BeyonderLauncher-${{ env.VERSION }}.tar.gz

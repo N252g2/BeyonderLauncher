@@ -22,7 +22,7 @@
 - Prism Launcher's API keys are removed. The Microsoft client ID is supplied at build time (see below);
   CurseForge and Imgur integrations are disabled.
 - The installer no longer claims `modrinth://` / `curseforge://` links, so it can sit next to Prism or the Modrinth App.
-- CI builds Linux x64, Windows x64 (MSVC) and macOS only.
+- CI builds Windows x64 (MSVC) and Linux x64 only.
 - Single-game mode (in progress): one managed Beyonder instance, auto-updated from a hosted modpack, launched straight into the server.
 
 ## Building
