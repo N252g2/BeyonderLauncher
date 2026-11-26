@@ -79,6 +79,10 @@ struct BeyonderManifest {
     // "launcher": { "version": "0.1.1", "url": "https://github.com/.../releases/latest" }
     QString latestLauncherVersion;
     QUrl launcherUrl;
+    // "launcher": { ..., "windows": { "installerUrl": "https://.../Setup.exe", "sha256": "<hex>" } }
+    // When present, installed Windows copies update themselves in place instead of opening launcherUrl.
+    QUrl launcherWindowsInstaller;
+    QString launcherWindowsSha256;
 
     const Edition* edition(const QString& id) const;
 

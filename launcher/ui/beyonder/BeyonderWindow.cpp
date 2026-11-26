@@ -12,6 +12,12 @@
 #include <algorithm>
 
 #include <QButtonGroup>
+#include <QCoreApplication>
+#include <QCryptographicHash>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
+#include <QProcess>
 #include <QCloseEvent>
 #include <QDebug>
 #include <QDesktopServices>
@@ -1118,8 +1124,15 @@ void BeyonderWindow::updateUi()
         m_statusProgress->setRange(0, 0);
     }
     m_ramButton->setText(tr(" %1 MB").arg(currentMaxMemoryMB()));
-    if (m_state == State::Ready && status.isEmpty() && launcherUpdateAvailable()) {
-        m_statusText->setText(tr("Launcher %1 is available: see Settings › Updates.").arg(m_manifest->latestLauncherVersion));
+    if (m_launcherJob) {
+        const QString next = m_manifest ? m_manifest->latestLauncherVersion : QString();
+        m_statusText->setText(m_launcherPercent >= 0 ? tr("Downloading launcher %1… %2%").arg(next).arg(m_launcherPercent)
+                                                     : tr("Downloading launcher %1…").arg(next));
+        m_statusProgress->setVisible(true);
+        m_statusProgress->setRange(0, m_launcherPercent >= 0 ? 100 : 0);
+        m_statusProgress->setValue(qMax(0, m_launcherPercent));
+    } else if (m_state == State::Ready && status.isEmpty() && launcherUpdateAvailable()) {
+        m_statusText->setText(tr("Launcher %1 is available: update it in Settings › Updates.").arg(m_manifest->latestLauncherVersion));
     }
 
     // Toast: once per new version, until dismissed
@@ -1155,6 +1168,93 @@ bool BeyonderWindow::launcherUpdateAvailable() const
 {
     return m_manifest && !m_manifest->latestLauncherVersion.isEmpty() &&
            Version(BuildConfig.versionString()) < Version(m_manifest->latestLauncherVersion);
+}
+
+bool BeyonderWindow::canSelfUpdate() const
+{
+#ifdef Q_OS_WIN
+    return launcherUpdateAvailable() && m_manifest->launcherWindowsInstaller.isValid() && m_manifest->launcherWindowsSha256.size() == 64 &&
+           !APPLICATION->isPortable() && QFileInfo::exists(QDir(QCoreApplication::applicationDirPath()).filePath("uninstall.exe"));
+#else
+    return false;
+#endif
+}
+
+void BeyonderWindow::startLauncherUpdate()
+{
+    if (!launcherUpdateAvailable() || m_launcherJob) {
+        return;
+    }
+    if (!canSelfUpdate()) {
+        // Portable, Linux, or no installer listed: the release page is the best we can do.
+        if (m_manifest->launcherUrl.isValid())
+            QDesktopServices::openUrl(m_manifest->launcherUrl);
+        return;
+    }
+    if (auto* inst = findInstance(); inst && inst->isRunning()) {
+        QMessageBox::information(this, tr("Update launcher"), tr("Close Beyonder first, then update the launcher."));
+        return;
+    }
+    if (m_installTask && m_installTask->isRunning()) {
+        QMessageBox::information(this, tr("Update launcher"), tr("Wait for the game update to finish, then update the launcher."));
+        return;
+    }
+
+    const QString version = m_manifest->latestLauncherVersion;
+    const QString setupPath = QDir(QDir::tempPath()).filePath(QString("BeyonderLauncher-Setup-%1.exe").arg(version));
+    const QString expectedHash = m_manifest->launcherWindowsSha256;
+    QFile::remove(setupPath);
+
+    m_launcherPercent = -1;
+    m_launcherJob.reset(new NetJob("Beyonder launcher update", APPLICATION->network()));
+    m_launcherJob->addNetAction(Net::Request::makeFile(m_manifest->launcherWindowsInstaller, setupPath));
+    connect(m_launcherJob.get(), &NetJob::progress, this, [this](qint64 current, qint64 total) {
+        if (total > 0) {
+            const int percent = static_cast<int>(current * 100 / total);
+            if (percent != m_launcherPercent) {
+                m_launcherPercent = percent;
+                updateUi();
+            }
+        }
+    });
+    connect(m_launcherJob.get(), &NetJob::failed, this, [this](const QString& reason) {
+        m_launcherJob.reset();
+        updateUi();
+        QMessageBox::warning(this, tr("Update failed"), tr("The new launcher couldn't be downloaded:\n\n%1").arg(reason));
+    });
+    connect(m_launcherJob.get(), &NetJob::succeeded, this, [this, setupPath, expectedHash, version] {
+        m_launcherJob.reset();
+        QFile file(setupPath);
+        QString actualHash;
+        if (file.open(QIODevice::ReadOnly)) {
+            QCryptographicHash hash(QCryptographicHash::Sha256);
+            hash.addData(&file);
+            actualHash = QString::fromLatin1(hash.result().toHex());
+            file.close();
+        }
+        if (actualHash != expectedHash) {
+            QFile::remove(setupPath);
+            updateUi();
+            QMessageBox::warning(this, tr("Update failed"),
+                                 tr("The downloaded launcher didn't match its published checksum, so it wasn't installed. Please try again later."));
+            return;
+        }
+        m_statusText->setText(tr("Installing launcher %1… Beyonder Launcher will restart.").arg(version));
+#ifdef Q_OS_WIN
+        // Run the installer silently (it closes this launcher and replaces its files), then start the new launcher.
+        QProcess updater;
+        updater.setProgram("cmd.exe");
+        updater.setNativeArguments(QString("/c start \"\" /wait \"%1\" /S & start \"\" \"%2\"")
+                                       .arg(QDir::toNativeSeparators(setupPath), QDir::toNativeSeparators(QCoreApplication::applicationFilePath())));
+        if (updater.startDetached()) {
+            QCoreApplication::quit();
+            return;
+        }
+#endif
+        QMessageBox::warning(this, tr("Update failed"), tr("The installer couldn't be started. You can run it yourself from:\n%1").arg(setupPath));
+    });
+    updateUi();
+    m_launcherJob->start();
 }
 
 void BeyonderWindow::updateAccessLabel()

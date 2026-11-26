@@ -72,6 +72,9 @@ class BeyonderWindow : public QMainWindow {
 
     void applyTheme();
     bool launcherUpdateAvailable() const;
+    // Installed Windows copies download the new installer, check its SHA-256, and reinstall silently.
+    bool canSelfUpdate() const;
+    void startLauncherUpdate();
 
     // UI construction
     QWidget* buildTitleBar();
@@ -185,6 +188,8 @@ class BeyonderWindow : public QMainWindow {
     BeyonderAccountPage* m_accountPage = nullptr;
     BeyonderSettingsPage* m_settingsPage = nullptr;
     QTimer* m_updateTimer = nullptr;
+    NetJob::Ptr m_launcherJob;
+    int m_launcherPercent = -1;
 
     // Status bar
     QLabel* m_statusIcon = nullptr;

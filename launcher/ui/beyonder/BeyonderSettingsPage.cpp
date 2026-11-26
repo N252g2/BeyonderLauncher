@@ -269,11 +269,8 @@ QWidget* BeyonderSettingsPage::buildUpdates()
     m_updateSummary->setWordWrap(true);
     card.body->insertWidget(0, m_updateSummary);
 
-    m_launcherDownload = makeWhiteButton(tr("Download new launcher"), Icon::Download);
-    connect(m_launcherDownload, &QPushButton::clicked, this, [this] {
-        if (m_window->m_manifest && m_window->m_manifest->launcherUrl.isValid())
-            QDesktopServices::openUrl(m_window->m_manifest->launcherUrl);
-    });
+    m_launcherDownload = makeWhiteButton(tr("Update launcher"), Icon::Download);
+    connect(m_launcherDownload, &QPushButton::clicked, this, [this] { m_window->startLauncherUpdate(); });
     card.body->addWidget(m_launcherDownload, 0, Qt::AlignLeft);
 
     card.body->addWidget(makeRow(tr("Auto update Beyonder"), tr("Downloads and installs new game releases as soon as the launcher sees them."),
@@ -449,7 +446,15 @@ void BeyonderSettingsPage::refresh()
         summary += tr(" • %1 available").arg(m->packVersion);
     }
     m_updateSummary->setText(summary);
-    m_launcherDownload->setVisible(launcherUpdate && m->launcherUrl.isValid());
+    const bool selfUpdate = m_window->canSelfUpdate();
+    m_launcherDownload->setVisible(launcherUpdate && (selfUpdate || m->launcherUrl.isValid()));
+    if (m_window->m_launcherJob) {
+        m_launcherDownload->setEnabled(false);
+        m_launcherDownload->setText(m_window->m_launcherPercent >= 0 ? tr(" Downloading… %1%").arg(m_window->m_launcherPercent) : tr(" Downloading…"));
+    } else {
+        m_launcherDownload->setEnabled(true);
+        m_launcherDownload->setText(selfUpdate ? tr(" Update to %1").arg(m->latestLauncherVersion) : tr(" Download %1").arg(launcherUpdate ? m->latestLauncherVersion : QString()));
+    }
 
     // Editions
     while (auto* item = m_editionLayout->takeAt(0)) {

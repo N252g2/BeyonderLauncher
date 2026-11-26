@@ -94,6 +94,9 @@ std::optional<BeyonderManifest> BeyonderManifest::parse(const QByteArray& data, 
     const auto launcher = obj.value("launcher").toObject();
     m.latestLauncherVersion = launcher.value("version").toString().trimmed();
     m.launcherUrl = httpsOrEmpty(launcher.value("url").toString());
+    const auto windows = launcher.value("windows").toObject();
+    m.launcherWindowsInstaller = httpsOrEmpty(windows.value("installerUrl").toString());
+    m.launcherWindowsSha256 = windows.value("sha256").toString().trimmed().toLower();
 
     m.accessUrl = obj.value("accessUrl").toString().trimmed();
     if (!m.accessUrl.isEmpty() && !m.accessUrl.startsWith("https://") && !m.accessUrl.startsWith("file://")) {
