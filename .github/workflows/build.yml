@@ -8,6 +8,8 @@ on:
   push:
     branches: ["**"]
     tags-ignore: ["**"]
+    # The website, pack manifest and modpack in docs/ don't need a new launcher build.
+    paths-ignore: ["docs/**"]
   pull_request:
   workflow_call:
     inputs:
