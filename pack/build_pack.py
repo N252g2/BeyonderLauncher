@@ -14,6 +14,7 @@ import os
 import sys
 import urllib.parse
 import urllib.request
+import xml.etree.ElementTree as ElementTree
 import zipfile
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -95,6 +96,26 @@ def modrinth_files(projects):
     return list(resolved.values())
 
 
+def neoforge_version():
+    """The pinned NeoForge version, or the newest stable one for this Minecraft version.
+
+    Mods such as Sodium bundle Fabric API pieces that need a recent NeoForge, so "latest" is the default.
+    """
+    wanted = SPEC.get("neoforge", "latest")
+    if wanted != "latest":
+        return wanted
+    mc = SPEC["minecraft"].split(".")
+    prefix = f"{mc[1]}.{mc[2] if len(mc) > 2 else 0}."  # 1.21.1 -> 21.1.
+    xml = get("https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml", raw=True)
+    versions = [v.text for v in ElementTree.fromstring(xml).iter("version")
+                if v.text.startswith(prefix) and "-" not in v.text]
+    if not versions:
+        sys.exit(f"No NeoForge release for Minecraft {SPEC['minecraft']}")
+    newest = max(versions, key=lambda v: [int(x) for x in v.split(".")])
+    print(f"NeoForge {newest}")
+    return newest
+
+
 def entry(path, f, server):
     return {
         "path": path,
@@ -105,7 +126,7 @@ def entry(path, f, server):
     }
 
 
-def build_edition(edition, mod_files):
+def build_edition(edition, mod_files, neoforge):
     files = [entry(f"mods/{mod_files['mod']['name']}", mod_files["mod"], True)]
     if edition.get("shaderpack"):
         files.append(entry("shaderpacks/BeyonderShaders.zip", mod_files["shaderpack"], False))
@@ -119,7 +140,7 @@ def build_edition(edition, mod_files):
         "name": "Beyonder" + ("" if edition["id"] == "standard" else f" ({edition['name']})"),
         "summary": SPEC["summary"],
         "files": files,
-        "dependencies": {"minecraft": SPEC["minecraft"], "neoforge": SPEC["neoforge"]},
+        "dependencies": {"minecraft": SPEC["minecraft"], "neoforge": neoforge},
     }
     name = f"Beyonder-{SPEC['version']}-{edition['id']}.mrpack"
     with zipfile.ZipFile(os.path.join(OUT, name), "w", zipfile.ZIP_DEFLATED) as z:
@@ -135,9 +156,10 @@ def build_edition(edition, mod_files):
 
 def main():
     tag, mod_files = mod_release()
+    neoforge = neoforge_version()
     editions = []
     for edition in SPEC["editions"]:
-        name = build_edition(edition, mod_files)
+        name = build_edition(edition, mod_files, neoforge)
         editions.append({
             "id": edition["id"],
             "name": edition["name"],
@@ -156,7 +178,7 @@ def main():
     with open(path, "w") as f:
         json.dump(manifest, f, indent=2, ensure_ascii=False)
         f.write("\n")
-    print(f"Manifest: pack {SPEC['version']} with mod {tag}")
+    print(f"Manifest: pack {SPEC['version']} with mod {tag} on NeoForge {neoforge}")
 
 
 if __name__ == "__main__":

@@ -1,7 +1,7 @@
 {
-  "version": "0.3.0",
+  "version": "0.3.1",
   "minecraft": "1.21.1",
-  "neoforge": "21.1.213",
+  "neoforge": "latest",
   "modRepo": "N252g2/BeyonderMod",
   "modRelease": "latest",
   "summary": "Season 0: Tingen. Minecraft 1.21.1 with NeoForge and the Beyonder mod.",
@@ -12,7 +12,9 @@
       "description": "Beyonder Shaders: soft shadows, red moonlight, flickering gaslight, coal-smoke fog and lamp glow. Needs a dedicated graphics card.",
       "recommendedMemoryMB": 6144,
       "shaderpack": true,
-      "modrinth": ["iris"]
+      "modrinth": [
+        "iris"
+      ]
     },
     {
       "id": "lite",
