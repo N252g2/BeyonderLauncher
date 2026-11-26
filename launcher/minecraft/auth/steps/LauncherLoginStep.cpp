@@ -21,17 +21,30 @@ QString LauncherLoginStep::describe()
 
 void LauncherLoginStep::perform()
 {
-    QUrl url("https://api.minecraftservices.com/launcher/login");
+    m_useLoginWithXbox = false;
+    sendRequest();
+}
+
+void LauncherLoginStep::sendRequest()
+{
     auto uhs = m_data->mojangservicesToken.extra["uhs"].toString();
     auto xToken = m_data->mojangservicesToken.token;
 
-    QString mc_auth_template = R"XXX(
+    QUrl url;
+    QString requestBody;
+    if (m_useLoginWithXbox) {
+        url = QUrl("https://api.minecraftservices.com/authentication/login_with_xbox");
+        requestBody = QString(R"XXX({ "identityToken": "XBL3.0 x=%1;%2" })XXX").arg(uhs, xToken);
+    } else {
+        url = QUrl("https://api.minecraftservices.com/launcher/login");
+        QString mc_auth_template = R"XXX(
 {
     "xtoken": "XBL3.0 x=%1;%2",
     "platform": "PC_LAUNCHER"
 }
 )XXX";
-    auto requestBody = mc_auth_template.arg(uhs, xToken);
+        requestBody = mc_auth_template.arg(uhs, xToken);
+    }
 
     auto headers = QList<Net::HeaderPair>{
         { "Content-Type", "application/json" },
@@ -58,7 +71,14 @@ void LauncherLoginStep::onRequestDone(QByteArray* response)
     qCDebug(authCredentials()) << *response;
     if (m_request->error() != QNetworkReply::NoError) {
         qWarning() << "Reply error:" << m_request->error();
-        // Beyonder Launcher: Minecraft services answer 403 for app IDs Mojang hasn't allow-listed yet.
+        // Beyonder Launcher: /launcher/login can refuse app IDs that Mojang approved for login_with_xbox; try that next.
+        if (m_request->replyStatusCode() == 403 && !m_useLoginWithXbox) {
+            qDebug() << "launcher/login refused this app ID, retrying with login_with_xbox";
+            m_useLoginWithXbox = true;
+            sendRequest();
+            return;
+        }
+        // Both endpoints answer 403 for app IDs Mojang hasn't allow-listed yet.
         if (m_request->replyStatusCode() == 403) {
             emit finished(AccountTaskState::STATE_FAILED_HARD,
                           tr("Minecraft sign-in for %1 is waiting for approval from Mojang. Your Microsoft account is fine; "

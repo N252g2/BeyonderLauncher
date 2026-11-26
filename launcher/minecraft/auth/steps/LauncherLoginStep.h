@@ -20,6 +20,10 @@ class LauncherLoginStep : public AuthStep {
     void onRequestDone(QByteArray* response);
 
    private:
+    void sendRequest();
+
     Net::Request::Ptr m_request;
     NetJob::Ptr m_task;
+    // Beyonder Launcher: fall back to the older login_with_xbox endpoint when /launcher/login refuses our app ID.
+    bool m_useLoginWithXbox = false;
 };
