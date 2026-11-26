@@ -518,7 +518,7 @@ QWidget* BeyonderWindow::buildSidebar()
     l->addWidget(makeLabel(tr("MENU"), "bSection", side));
     m_nav = new QButtonGroup(this);
     m_nav->setExclusive(true);
-    auto navButton = [this, side, l](const char* icon, const QString& text) {
+    auto navButton = [side, l](const char* icon, const QString& text) {
         auto* b = new QPushButton(lineIcon(icon, "#c9c9d0", 18), "  " + text, side);
         b->setObjectName("bNav");
         b->setCheckable(true);
@@ -988,9 +988,9 @@ void BeyonderWindow::checkForUpdates()
     m_manifestJob->addNetAction(request);
     connect(m_manifestJob.get(), &NetJob::succeeded, this, [this, response] {
         // Copy out before the job (which owns the buffer) goes away.
-        const QByteArray data = *response;
+        const QByteArray manifestBytes = *response;
         m_manifestJob.reset();
-        onManifestDownloaded(data);
+        onManifestDownloaded(manifestBytes);
     });
     connect(m_manifestJob.get(), &NetJob::failed, this, [this](const QString& reason) {
         m_manifestJob.reset();
@@ -999,10 +999,10 @@ void BeyonderWindow::checkForUpdates()
     m_manifestJob->start();
 }
 
-void BeyonderWindow::onManifestDownloaded(const QByteArray& data)
+void BeyonderWindow::onManifestDownloaded(const QByteArray& manifestBytes)
 {
     QString error;
-    m_manifest = BeyonderManifest::parse(data, error);
+    m_manifest = BeyonderManifest::parse(manifestBytes, error);
     m_manifestError = error;
 
     if (m_manifest && !m_manifest->minLauncherVersion.isEmpty() &&

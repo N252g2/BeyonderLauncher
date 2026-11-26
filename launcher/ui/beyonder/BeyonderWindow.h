@@ -83,7 +83,7 @@ class BeyonderWindow : public QMainWindow {
     void rebuildRamMenu();
     void showToast(bool show);
     void positionToast();
-    void onManifestDownloaded(const QByteArray& data);
+    void onManifestDownloaded(const QByteArray& manifestBytes);
     void onManifestFailed(const QString& reason);
     void refreshState();
 
