@@ -52,7 +52,7 @@ On start-up the launcher downloads `Beyonder_MANIFEST_URL` (default: `docs/pack/
   "serverName": "Tingen",
   "season": "Season 0",
   "recommendedMemoryMB": 6144,
-  "minLauncherVersion": "12.0.0",
+  "minLauncherVersion": "0.1.0",
   "links": { "discord": "https://discord.gg/...", "website": "https://..." },
   "motd": "<h2>Season 0: Tingen</h2><p>Shown at the top of the News page.</p>",
   "news": [ { "title": "Patch 0.1.0", "date": "2026-11-26", "body": "<p>HTML allowed</p>", "url": "https://..." } ]

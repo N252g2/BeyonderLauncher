@@ -6,7 +6,7 @@
   "serverName": "Tingen",
   "season": "Season 0",
   "recommendedMemoryMB": 6144,
-  "minLauncherVersion": "12.0.0",
+  "minLauncherVersion": "0.1.0",
   "links": {
     "website": "https://n252g2.github.io/BeyonderLauncher"
   },
