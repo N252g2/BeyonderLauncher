@@ -826,6 +826,9 @@ Application::Application(int& argc, char** argv) : QApplication(argc, argv)
         m_settings->registerSetting("BeyonderWindowGeometry", "");
         // Start in the classic multi-instance window instead of the Beyonder home screen
         m_settings->registerSetting("BeyonderClassicView", false);
+        // Chosen pack edition (manifest "editions" id) and the one currently installed
+        m_settings->registerSetting("BeyonderEdition", "standard");
+        m_settings->registerSetting("BeyonderInstalledEdition", "");
 
         m_settings->registerSetting("ConsoleWindowState", "");
         m_settings->registerSetting("ConsoleWindowGeometry", "");

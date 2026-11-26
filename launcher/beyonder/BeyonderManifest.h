@@ -30,8 +30,17 @@
  *   "season": "Season 0",
  *   "serverName": "Tingen",
  *   "links": { "discord": "https://discord.gg/...", "website": "https://..." },
- *   "news": [ { "title": "Patch 0.1.0", "date": "2026-11-26", "body": "<p>HTML allowed</p>", "url": "https://..." } ]
+ *   "news": [ { "title": "Patch 0.1.0", "date": "2026-11-26", "body": "<p>HTML allowed</p>", "url": "https://..." } ],
+ *   "editions": [
+ *     { "id": "standard", "name": "Standard", "description": "Shaders and far view distance", "mrpackUrl": "https://...", "recommendedMemoryMB": 6144 },
+ *     { "id": "lite", "name": "Lite", "description": "For weaker PCs", "mrpackUrl": "https://...", "recommendedMemoryMB": 4096 }
+ *   ],
+ *   "accessUrl": "https://api.example.net/v1/access/{uuid}"
  * }
+ *
+ * "editions" is optional; without it the top-level mrpackUrl is the only ("standard") edition.
+ * "accessUrl" is optional; {uuid} and {name} are replaced with the player's Minecraft UUID and name.
+ * See docs/ACCESS_API.md for the response format.
  */
 struct BeyonderManifest {
     static constexpr int SupportedFormatVersion = 1;
@@ -55,6 +64,19 @@ struct BeyonderManifest {
         QUrl url;
     };
     QList<NewsItem> news;
+
+    struct Edition {
+        QString id;
+        QString name;
+        QString description;
+        QUrl mrpackUrl;
+        int recommendedMemoryMB = 0;
+    };
+    QList<Edition> editions;  // never empty after parse()
+
+    QString accessUrl;  // template, may be empty
+
+    const Edition* edition(const QString& id) const;
 
     // Returns the manifest, or nothing and an error message in errorOut.
     static std::optional<BeyonderManifest> parse(const QByteArray& data, QString& errorOut);

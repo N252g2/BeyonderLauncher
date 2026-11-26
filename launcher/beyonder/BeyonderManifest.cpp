@@ -64,9 +64,46 @@ std::optional<BeyonderManifest> BeyonderManifest::parse(const QByteArray& data, 
         errorOut = QCoreApplication::translate("BeyonderManifest", "The pack manifest has no \"packVersion\".");
         return std::nullopt;
     }
-    if (!m.mrpackUrl.isValid() || m.mrpackUrl.scheme() != "https") {
-        errorOut = QCoreApplication::translate("BeyonderManifest", "The pack manifest's \"mrpackUrl\" must be an https:// link.");
+    auto isHttps = [](const QUrl& u) { return u.isValid() && u.scheme() == "https"; };
+
+    for (const auto& v : obj.value("editions").toArray()) {
+        const auto e = v.toObject();
+        Edition ed;
+        ed.id = e.value("id").toString().trimmed().toLower();
+        ed.name = e.value("name").toString().trimmed();
+        ed.description = e.value("description").toString().trimmed();
+        ed.mrpackUrl = QUrl(e.value("mrpackUrl").toString().trimmed());
+        ed.recommendedMemoryMB = e.value("recommendedMemoryMB").toInt(m.recommendedMemoryMB);
+        if (ed.id.isEmpty() || !isHttps(ed.mrpackUrl)) {
+            errorOut = QCoreApplication::translate("BeyonderManifest", "An edition in the pack manifest needs an \"id\" and an https:// \"mrpackUrl\".");
+            return std::nullopt;
+        }
+        if (ed.name.isEmpty())
+            ed.name = ed.id.left(1).toUpper() + ed.id.mid(1);
+        m.editions.append(ed);
+    }
+    if (m.editions.isEmpty()) {
+        if (!isHttps(m.mrpackUrl)) {
+            errorOut = QCoreApplication::translate("BeyonderManifest", "The pack manifest's \"mrpackUrl\" must be an https:// link.");
+            return std::nullopt;
+        }
+        m.editions.append(Edition{ "standard", QCoreApplication::translate("BeyonderManifest", "Standard"), QString(), m.mrpackUrl,
+                                   m.recommendedMemoryMB });
+    }
+
+    m.accessUrl = obj.value("accessUrl").toString().trimmed();
+    if (!m.accessUrl.isEmpty() && !m.accessUrl.startsWith("https://") && !m.accessUrl.startsWith("file://")) {
+        errorOut = QCoreApplication::translate("BeyonderManifest", "The pack manifest's \"accessUrl\" must be an https:// link.");
         return std::nullopt;
     }
     return m;
+}
+
+const BeyonderManifest::Edition* BeyonderManifest::edition(const QString& id) const
+{
+    for (const auto& e : editions) {
+        if (e.id == id)
+            return &e;
+    }
+    return editions.isEmpty() ? nullptr : &editions.first();
 }

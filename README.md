@@ -65,6 +65,8 @@ On start-up the launcher downloads `Beyonder_MANIFEST_URL` (default: `docs/pack/
 - `links`: the Discord and Website buttons, plus the Discord card on the Library page.
 - `motd`, `news`: the News page.
 - `recommendedMemoryMB`: applied once, the first time the pack is installed. After that, the player's own setting wins.
+- `editions` (optional): several packs players can choose between on the game card, for example Standard (shaders, Distant Horizons) and Lite (for weaker PCs), each with its own `mrpackUrl` and `recommendedMemoryMB`. Switching keeps worlds and settings.
+- `accessUrl` (optional): whitelist / Discord link / Lost Control / ban status shown before Play. See [docs/ACCESS_API.md](docs/ACCESS_API.md).
 - To release an update: upload the new `.mrpack`, then change `packVersion` and `mrpackUrl` and push.
 
 Setting `BeyonderClassicView=true` in the launcher config, or building with `-DBeyonder_MANIFEST_URL=""`, gives you the normal multi-instance launcher. The **Advanced** button on the home screen also opens it.

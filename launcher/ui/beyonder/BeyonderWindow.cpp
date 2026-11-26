@@ -18,6 +18,9 @@
 #include <QFrame>
 #include <QGraphicsDropShadowEffect>
 #include <QHBoxLayout>
+#include <QHash>
+#include <QJsonDocument>
+#include <QJsonObject>
 #include <QLabel>
 #include <QLinearGradient>
 #include <QMenu>
@@ -155,6 +158,14 @@ const char* const s_styleSheet = R"(
 #bPlay:hover { background: #d23c46; }
 #bPlay:disabled { background: #18181b; border-color: #26262b; color: #6b6b74; }
 #bPlay[running="true"] { background: rgba(74, 222, 128, 0.1); border-color: rgba(74, 222, 128, 0.45); color: #4ade80; }
+#bPlay[blocked="true"] { background: rgba(239, 68, 68, 0.1); border-color: rgba(239, 68, 68, 0.45); color: #f87171; }
+#bPlay[blocked="true"]:hover { background: rgba(239, 68, 68, 0.16); }
+#bEdition {
+    background: rgba(10, 10, 11, 0.82); border: 1px solid #34343a; border-radius: 5px;
+    padding: 2px 7px; font-size: 11px; font-weight: 600;
+}
+#bEdition:hover { border-color: #5a5a62; }
+#bEdition::menu-indicator { image: none; width: 0; }
 #bIconButton { background: #121214; border: 1px solid #26262b; border-radius: 8px; padding: 8px; }
 #bIconButton:hover { border-color: #3a3a40; }
 
@@ -180,10 +191,12 @@ QProgressBar::chunk { background: #4ade80; border-radius: 3px; }
 #bToastText { color: #b4b4bc; font-size: 12px; }
 
 QMenu { background: #121214; border: 1px solid #26262b; border-radius: 8px; padding: 5px; }
-QMenu::item { padding: 7px 22px 7px 10px; border-radius: 5px; color: #ededef; }
+QMenu::item { padding: 7px 22px 7px 26px; border-radius: 5px; color: #ededef; }
 QMenu::item:selected { background: #1f1f24; }
 QMenu::separator { height: 1px; background: #26262b; margin: 5px 6px; }
-QMenu::indicator { width: 0; }
+QMenu::indicator { width: 8px; height: 8px; left: 10px; }
+QMenu::indicator:checked { background: #4ade80; border-radius: 4px; }
+QMenu::indicator:unchecked { background: transparent; }
 QToolTip { background: #121214; color: #ededef; border: 1px solid #26262b; padding: 4px 6px; }
 QScrollBar:vertical { background: transparent; width: 10px; margin: 2px; }
 QScrollBar::handle:vertical { background: #2a2a2f; border-radius: 4px; min-height: 30px; }
@@ -218,6 +231,7 @@ const char* const Download = R"(<path d="M12 4v11"/><path d="m7 10 5 5 5-5"/><pa
 const char* const Chat = R"(<path d="M4 5h16v11H9l-5 4z"/>)";
 const char* const Globe = R"(<circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c3 3.5 3 14.5 0 18M12 3c-3 3.5-3 14.5 0 18"/>)";
 const char* const Activity = R"(<path d="M3 12h4l3-7 4 14 3-7h4"/>)";
+const char* const Info = R"(<circle cx="12" cy="12" r="9"/><path d="M12 11v6M12 7.5v.5"/>)";
 const char* const Check = R"(<circle cx="12" cy="12" r="9"/><path d="m8 12 3 3 5-6"/>)";
 const char* const Play = R"(<path d="M8 5v14l11-7z"/>)";
 const char* const Chip = R"(<rect x="6" y="6" width="12" height="12" rx="2"/><path d="M9 2v3M15 2v3M9 19v3M15 19v3M2 9h3M2 15h3M19 9h3M19 15h3"/>)";
@@ -432,6 +446,13 @@ BeyonderWindow::BeyonderWindow(QWidget* parent) : QMainWindow(parent)
     m_pingTimer->setInterval(60 * 1000);
     connect(m_pingTimer, &QTimer::timeout, this, &BeyonderWindow::pingServer);
     m_pingTimer->start();
+
+    // Team-style role/whitelist changes show up within ~90 seconds.
+    m_accessTimer = new QTimer(this);
+    m_accessTimer->setInterval(90 * 1000);
+    connect(m_accessTimer, &QTimer::timeout, this, &BeyonderWindow::checkAccess);
+    m_accessTimer->start();
+    connect(accounts, &AccountList::defaultAccountChanged, this, &BeyonderWindow::checkAccess);
 
     watchInstance(findInstance());
     updateNews();
@@ -661,6 +682,7 @@ QWidget* BeyonderWindow::buildLibraryPage()
     connect(refresh, &QPushButton::clicked, this, [this] {
         checkForUpdates();
         pingServer();
+        checkAccess();
     });
     sl->addWidget(refresh);
     l->addWidget(strip);
@@ -718,7 +740,7 @@ QWidget* BeyonderWindow::buildGameCard()
 {
     auto* card = new QFrame();
     card->setObjectName("bCard");
-    card->setFixedWidth(272);
+    card->setFixedWidth(300);
     auto* l = new QVBoxLayout(card);
     l->setContentsMargins(1, 1, 1, 14);
     l->setSpacing(0);
@@ -728,9 +750,16 @@ QWidget* BeyonderWindow::buildGameCard()
     auto* coverLayout = new QVBoxLayout(m_cover);
     coverLayout->setContentsMargins(12, 12, 12, 12);
     auto* top = new QHBoxLayout();
-    m_editionBadge = makeLabel(tr("Standard"), "bBadge", m_cover);
+    m_editionButton = new QToolButton(m_cover);
+    m_editionButton->setObjectName("bEdition");
+    m_editionButton->setPopupMode(QToolButton::InstantPopup);
+    m_editionButton->setCursor(Qt::PointingHandCursor);
+    m_editionButton->setToolTip(tr("Choose an edition"));
+    m_editionMenu = new QMenu(m_editionButton);
+    m_editionButton->setMenu(m_editionMenu);
+    connect(m_editionMenu, &QMenu::aboutToShow, this, &BeyonderWindow::rebuildEditionMenu);
     m_stateBadge = makeLabel(QString(), "bBadge", m_cover);
-    top->addWidget(m_editionBadge);
+    top->addWidget(m_editionButton);
     top->addStretch(1);
     top->addWidget(m_stateBadge);
     coverLayout->addLayout(top);
@@ -1014,6 +1043,7 @@ void BeyonderWindow::onManifestDownloaded(const QByteArray& manifestBytes)
     updateNews();
     refreshState();
     pingServer();
+    checkAccess();
 }
 
 void BeyonderWindow::onManifestFailed(const QString& reason)
@@ -1073,7 +1103,7 @@ void BeyonderWindow::refreshState()
     }
     if (!inst) {
         setState(State::NeedsInstall);
-    } else if (inst->getManagedPackVersionID() != m_manifest->packVersion) {
+    } else if (inst->getManagedPackVersionID() != m_manifest->packVersion || installedEditionId() != currentEditionId()) {
         setState(State::NeedsUpdate);
     } else {
         setState(State::Ready);
@@ -1099,7 +1129,10 @@ void BeyonderWindow::updateUi()
     auto* inst = findInstance();
     const QString installed = inst ? inst->getManagedPackVersionID() : QString();
     const QString latest = m_manifest ? m_manifest->packVersion : QString();
-    const QString season = (m_manifest && !m_manifest->season.isEmpty()) ? m_manifest->season : tr("Standard");
+    const QString season = (m_manifest && !m_manifest->season.isEmpty()) ? m_manifest->season : tr("Season 0");
+    const auto* edition = m_manifest ? m_manifest->edition(currentEditionId()) : nullptr;
+    const QString editionName = edition ? edition->name : tr("Standard");
+    const bool editionSwitch = inst && m_manifest && installed == latest && installedEditionId() != currentEditionId();
 
     QString playText = tr("PLAY");
     QString playIcon = Icon::Play;
@@ -1132,22 +1165,62 @@ void BeyonderWindow::updateUi()
                 status = tr("Beyonder isn't installed yet.");
             break;
         case State::NeedsUpdate:
-            playText = tr("UPDATE");
+            playText = editionSwitch ? tr("SWITCH") : tr("UPDATE");
             playIcon = Icon::Download;
-            badgeText = tr("Update");
+            badgeText = editionSwitch ? tr("Switch") : tr("Update");
             badgeStyle = "bBadgeAmber";
-            subtitle = tr("Update to %1 available").arg(latest);
-            quick = tr("Update available");
+            subtitle = editionSwitch ? tr("Switch to the %1 edition").arg(editionName) : tr("Update to %1 available").arg(latest);
+            quick = editionSwitch ? tr("Edition change pending") : tr("Update available");
             dotColor = Color::Amber;
             if (status.isEmpty())
-                status = tr("Beyonder %1 is ready to install.").arg(latest);
+                status = editionSwitch ? tr("Press Switch to change to the %1 edition. Your worlds and settings are kept.").arg(editionName)
+                                       : tr("Beyonder %1 is ready to install.").arg(latest);
             break;
         case State::Ready:
             badgeText = tr("Ready");
             badgeStyle = "bBadgeGreen";
-            subtitle = tr("Ready to play • %1").arg(season);
+            subtitle = tr("Ready to play • %1 edition").arg(editionName);
             quick = tr("Ready");
             dotColor = Color::Green;
+            switch (m_access) {
+                case Access::DiscordRequired:
+                    playText = tr("LINK DISCORD");
+                    playIcon = Icon::Chat;
+                    badgeText = tr("Link Discord");
+                    badgeStyle = "bBadgeAmber";
+                    quick = tr("Discord not linked");
+                    dotColor = Color::Amber;
+                    break;
+                case Access::NotWhitelisted:
+                    playText = tr("NO ACCESS");
+                    playIcon = Icon::Info;
+                    badgeText = tr("No Access");
+                    badgeStyle = "bBadgeAmber";
+                    quick = tr("Not whitelisted");
+                    dotColor = Color::Amber;
+                    break;
+                case Access::LostControl:
+                    playText = tr("LOST CONTROL");
+                    playIcon = Icon::Info;
+                    badgeText = tr("Lost Control");
+                    badgeStyle = "bBadgeRed";
+                    subtitle = tr("Your Beyonder lost control");
+                    quick = tr("Lost Control");
+                    dotColor = Color::Red;
+                    break;
+                case Access::Banned:
+                    playText = tr("BANNED");
+                    playIcon = Icon::Info;
+                    badgeText = tr("Banned");
+                    badgeStyle = "bBadgeRed";
+                    quick = tr("Banned");
+                    dotColor = Color::Red;
+                    break;
+                default:
+                    break;
+            }
+            if (accessBlocksPlay() && status.isEmpty() && !m_accessMessage.isEmpty())
+                status = m_accessMessage;
             break;
         case State::Installing:
             playText = m_installPercent >= 0 ? tr("INSTALLING %1%").arg(m_installPercent) : tr("INSTALLING…");
@@ -1183,14 +1256,21 @@ void BeyonderWindow::updateUi()
 
     // Game card
     m_playButton->setText("  " + playText);
-    m_playButton->setIcon(lineIcon(playIcon, running ? Color::Green : (playEnabled ? "#ffffff" : "#6b6b74"), 16, playIcon == Icon::Play));
+    m_playButton->setIcon(lineIcon(playIcon, running ? Color::Green : (!playEnabled ? "#6b6b74" : (m_state == State::Ready && accessBlocksPlay() ? "#f87171" : "#ffffff")),
+                                   16, playIcon == Icon::Play));
     m_playButton->setEnabled(playEnabled);
     m_playButton->setProperty("running", running);
+    const bool blocked = m_state == State::Ready && accessBlocksPlay();
+    m_playButton->setProperty("blocked", blocked);
     restyle(m_playButton);
     m_stateBadge->setText(badgeText);
     m_stateBadge->setObjectName(badgeStyle);
     restyle(m_stateBadge);
-    m_editionBadge->setText(latest.isEmpty() ? season : QString("%1 • %2").arg(season, latest));
+    QString editionText = latest.isEmpty() ? editionName : QString("%1 • %2").arg(editionName, latest);
+    if (m_manifest && m_manifest->editions.size() > 1)
+        editionText += QString::fromUtf8("  ▾");
+    m_editionButton->setText(editionText);
+    m_editionButton->setEnabled(m_manifest && m_manifest->editions.size() > 1 && m_state != State::Installing);
     m_installedLabel->setText(installed.isEmpty() ? tr("Not installed") : tr("Installed %1").arg(installed));
     if (inst && inst->totalTimePlayed() > 0) {
         m_playtimeBadge->setText(tr("%1 played").arg(humanHours(inst->totalTimePlayed())));
@@ -1205,7 +1285,7 @@ void BeyonderWindow::updateUi()
     // Sidebar
     m_quickStatus->setText(quick);
     m_quickDot->setStyleSheet(QString("color: %1; font-size: 9px;").arg(dotColor));
-    const bool updateAvailable = m_state == State::NeedsUpdate;
+    const bool updateAvailable = m_state == State::NeedsUpdate && !editionSwitch;
     m_sideUpdateButton->setVisible(updateAvailable);
     m_sideUpdateText->setText(tr("Click to update to %1.").arg(latest));
     m_titleUpdateButton->setVisible(updateAvailable);
@@ -1248,6 +1328,46 @@ void BeyonderWindow::updateAccessLabel()
     auto account = APPLICATION->accounts()->defaultAccount();
     QString text;
     QString color;
+    QString tip = m_accessMessage;
+    if (account && m_access != Access::NotConfigured && m_access != Access::Unknown) {
+        switch (m_access) {
+            case Access::Checking:
+                text = tr("Checking access…");
+                color = Color::Muted;
+                break;
+            case Access::Allowed:
+                text = tr("Access Verified");
+                color = Color::Green;
+                if (!m_accessDiscordName.isEmpty())
+                    tip = tr("Discord: %1").arg(m_accessDiscordName);
+                break;
+            case Access::NotWhitelisted:
+                text = tr("Not whitelisted");
+                color = Color::Amber;
+                break;
+            case Access::DiscordRequired:
+                text = tr("Discord not linked");
+                color = Color::Amber;
+                break;
+            case Access::LostControl:
+                text = tr("Lost Control");
+                color = Color::Red;
+                break;
+            case Access::Banned:
+                text = tr("Banned");
+                color = Color::Red;
+                break;
+            default:
+                text = tr("Access check unavailable");
+                color = Color::Muted;
+                break;
+        }
+        m_accessLabel->setText(text);
+        m_accessLabel->setToolTip(tip);
+        m_accessLabel->setStyleSheet(QString("color: %1; font-size: 12px; font-weight: 600; padding-right: 6px;").arg(color));
+        return;
+    }
+    m_accessLabel->setToolTip(QString());
     if (!account) {
         text = tr("Not signed in");
         color = Color::Muted;
@@ -1372,7 +1492,8 @@ void BeyonderWindow::rebuildRamMenu()
 {
     m_ramMenu->clear();
     const int current = currentMaxMemoryMB();
-    const int recommended = m_manifest ? m_manifest->recommendedMemoryMB : 0;
+    const auto* edition = m_manifest ? m_manifest->edition(currentEditionId()) : nullptr;
+    const int recommended = edition ? edition->recommendedMemoryMB : 0;
     for (int gb : { 4, 6, 8, 10, 12, 16 }) {
         const int mb = gb * 1024;
         QString text = tr("%1 GB").arg(gb);
@@ -1434,6 +1555,8 @@ void BeyonderWindow::startInstall(bool launchAfter)
     showToast(false);
 
     auto* existing = findInstance();
+    const auto* edition = m_manifest->edition(currentEditionId());
+    const QString editionId = edition->id;
 
     QMap<QString, QString> extraInfo;
     extraInfo.insert("pack_id", BuildConfig.BEYONDER_PACK_ID);
@@ -1443,7 +1566,7 @@ void BeyonderWindow::startInstall(bool launchAfter)
     }
 
     // Trusted: the manifest URL is baked into this build, so we accept downloads from the hosts it lists.
-    auto* importTask = new InstanceImportTask(m_manifest->mrpackUrl, true, this, std::move(extraInfo));
+    auto* importTask = new InstanceImportTask(edition->mrpackUrl, true, this, std::move(extraInfo));
     if (existing) {
         importTask->setName(existing->name());
         importTask->setIcon(existing->iconKey());
@@ -1470,7 +1593,8 @@ void BeyonderWindow::startInstall(bool launchAfter)
             }
         }
     });
-    connect(m_installTask.get(), &Task::succeeded, this, [this, launchAfter] {
+    connect(m_installTask.get(), &Task::succeeded, this, [this, launchAfter, editionId] {
+        APPLICATION->settings()->set("BeyonderInstalledEdition", editionId);
         if (auto* inst = findInstance()) {
             applyRecommendedSettings(inst);
         }
@@ -1495,7 +1619,9 @@ void BeyonderWindow::startInstall(bool launchAfter)
 
 void BeyonderWindow::applyRecommendedSettings(MinecraftInstance* instance)
 {
-    if (!m_manifest || m_manifest->recommendedMemoryMB <= 0) {
+    const auto* edition = m_manifest ? m_manifest->edition(currentEditionId()) : nullptr;
+    const int recommended = edition ? edition->recommendedMemoryMB : 0;
+    if (recommended <= 0) {
         return;
     }
     auto* settings = instance->settings();
@@ -1504,8 +1630,8 @@ void BeyonderWindow::applyRecommendedSettings(MinecraftInstance* instance)
         return;
     }
     settings->set("OverrideMemory", true);
-    settings->set("MaxMemAlloc", m_manifest->recommendedMemoryMB);
-    settings->set("MinMemAlloc", std::min(1024, m_manifest->recommendedMemoryMB));
+    settings->set("MaxMemAlloc", recommended);
+    settings->set("MinMemAlloc", std::min(1024, recommended));
 }
 
 // =====================================================================================================================
@@ -1526,6 +1652,10 @@ void BeyonderWindow::onPlayClicked()
             startInstall(true);
             return;
         case State::Ready:
+            if (accessBlocksPlay()) {
+                explainAccess();
+                return;
+            }
             launchGame();
             return;
         default:
@@ -1596,6 +1726,11 @@ void BeyonderWindow::rebuildAccountMenu()
     if (accounts->count() > 0) {
         m_accountMenu->addSeparator();
     }
+    if (m_accessLinkUrl.isValid()) {
+        connect(m_accountMenu->addAction(lineIcon(Icon::Chat, "#c9c9d0", 16), m_accessDiscordName.isEmpty() ? tr("Link Discord account…") : tr("Discord: %1").arg(m_accessDiscordName)),
+                &QAction::triggered, this, [this] { QDesktopServices::openUrl(m_accessLinkUrl); });
+        m_accountMenu->addSeparator();
+    }
     connect(m_accountMenu->addAction(tr("Add Microsoft account…")), &QAction::triggered, this, &BeyonderWindow::addMicrosoftAccount);
     connect(m_accountMenu->addAction(tr("Manage accounts…")), &QAction::triggered, this,
             [this] { APPLICATION->ShowGlobalSettings(this, "accounts"); });
@@ -1609,5 +1744,188 @@ void BeyonderWindow::rebuildAccountMenu()
     }
     if (m_accessLabel) {
         updateAccessLabel();
+    }
+}
+
+// =====================================================================================================================
+// Editions
+// =====================================================================================================================
+
+QString BeyonderWindow::currentEditionId() const
+{
+    const QString chosen = APPLICATION->settings()->get("BeyonderEdition").toString();
+    if (!m_manifest) {
+        return chosen.isEmpty() ? QStringLiteral("standard") : chosen;
+    }
+    return m_manifest->edition(chosen)->id;  // falls back to the first edition if the choice no longer exists
+}
+
+QString BeyonderWindow::installedEditionId() const
+{
+    const QString installed = APPLICATION->settings()->get("BeyonderInstalledEdition").toString();
+    if (!installed.isEmpty()) {
+        return installed;
+    }
+    // Installs from before editions existed used the only pack there was.
+    return m_manifest && !m_manifest->editions.isEmpty() ? m_manifest->editions.first().id : QStringLiteral("standard");
+}
+
+void BeyonderWindow::setEdition(const QString& id)
+{
+    APPLICATION->settings()->set("BeyonderEdition", id);
+    refreshState();
+}
+
+void BeyonderWindow::rebuildEditionMenu()
+{
+    m_editionMenu->clear();
+    if (!m_manifest) {
+        return;
+    }
+    const QString current = currentEditionId();
+    for (const auto& e : m_manifest->editions) {
+        QString text = e.name;
+        if (!e.description.isEmpty())
+            text += QString::fromUtf8(" — ") + e.description;
+        auto* action = m_editionMenu->addAction(text);
+        action->setCheckable(true);
+        action->setChecked(e.id == current);
+        const QString id = e.id;
+        connect(action, &QAction::triggered, this, [this, id] { setEdition(id); });
+    }
+}
+
+// =====================================================================================================================
+// Access
+// =====================================================================================================================
+
+bool BeyonderWindow::accessBlocksPlay() const
+{
+    switch (m_access) {
+        case Access::NotWhitelisted:
+        case Access::DiscordRequired:
+        case Access::LostControl:
+        case Access::Banned:
+            return true;
+        default:
+            // Unknown or unreachable: let the game server make the final call.
+            return false;
+    }
+}
+
+void BeyonderWindow::checkAccess()
+{
+    auto account = APPLICATION->accounts()->defaultAccount();
+    if (!m_manifest || m_manifest->accessUrl.isEmpty()) {
+        m_access = Access::NotConfigured;
+        updateUi();
+        return;
+    }
+    if (!account || !account->hasProfile()) {
+        m_access = Access::Unknown;
+        m_accessLinkUrl.clear();
+        updateUi();
+        return;
+    }
+    if (m_accessJob) {
+        return;
+    }
+    QString url = m_manifest->accessUrl;
+    url.replace("{uuid}", account->profileId());
+    url.replace("{name}", QString::fromUtf8(QUrl::toPercentEncoding(account->profileName())));
+
+    if (m_access == Access::NotConfigured || m_access == Access::Unknown) {
+        m_access = Access::Checking;
+        updateUi();
+    }
+    m_accessJob.reset(new NetJob("Beyonder access", APPLICATION->network()));
+    auto [request, response] = Net::Request::makeByteArray(QUrl(url), Net::Request::Option::AcceptLocalFiles);
+    m_accessJob->addNetAction(request);
+    connect(m_accessJob.get(), &NetJob::succeeded, this, [this, response] {
+        const QByteArray reply = *response;
+        m_accessJob.reset();
+        onAccessReply(reply);
+    });
+    connect(m_accessJob.get(), &NetJob::failed, this, [this](const QString& reason) {
+        qWarning() << "Beyonder access check failed:" << reason;
+        m_accessJob.reset();
+        m_access = Access::Unreachable;
+        m_accessMessage = tr("The access service didn't answer. You can still try to join; the server decides.");
+        updateUi();
+    });
+    m_accessJob->start();
+}
+
+void BeyonderWindow::onAccessReply(const QByteArray& reply)
+{
+    const auto obj = QJsonDocument::fromJson(reply).object();
+    const QString status = obj.value("status").toString();
+    static const QHash<QString, Access> s_statuses = {
+        { "allowed", Access::Allowed },           { "not_whitelisted", Access::NotWhitelisted },
+        { "discord_required", Access::DiscordRequired }, { "lost_control", Access::LostControl },
+        { "banned", Access::Banned },
+    };
+    m_access = s_statuses.value(status, Access::Unreachable);
+    m_accessMessage = obj.value("message").toString();
+    m_accessDiscordName = obj.value("discordName").toString();
+    const QUrl link(obj.value("linkUrl").toString());
+    m_accessLinkUrl = (link.isValid() && link.scheme() == "https") ? link : QUrl();
+
+    if (m_accessMessage.isEmpty()) {
+        switch (m_access) {
+            case Access::NotWhitelisted:
+                m_accessMessage = tr("You're not on the whitelist yet. Apply on the Beyonder Discord.");
+                break;
+            case Access::DiscordRequired:
+                m_accessMessage = tr("Link your Discord account to play on Beyonder.");
+                break;
+            case Access::LostControl:
+                m_accessMessage = tr("Your Beyonder lost control and became a monster. Wait for the next revival.");
+                break;
+            case Access::Banned:
+                m_accessMessage = tr("This account is banned from Beyonder.");
+                break;
+            default:
+                break;
+        }
+    }
+    rebuildAccountMenu();
+    updateUi();
+}
+
+void BeyonderWindow::explainAccess()
+{
+    if (m_access == Access::DiscordRequired && m_accessLinkUrl.isValid()) {
+        QDesktopServices::openUrl(m_accessLinkUrl);
+        return;
+    }
+    QString title;
+    switch (m_access) {
+        case Access::NotWhitelisted:
+            title = tr("No access yet");
+            break;
+        case Access::DiscordRequired:
+            title = tr("Link Discord");
+            break;
+        case Access::LostControl:
+            title = tr("Lost Control");
+            break;
+        case Access::Banned:
+            title = tr("Banned");
+            break;
+        default:
+            return;
+    }
+    QMessageBox box(QMessageBox::Information, title, m_accessMessage, QMessageBox::Close, this);
+    QPushButton* discord = nullptr;
+    if (m_access == Access::NotWhitelisted && m_manifest && m_manifest->discordUrl.isValid()) {
+        discord = box.addButton(tr("Open Discord"), QMessageBox::AcceptRole);
+    } else if (m_accessLinkUrl.isValid()) {
+        discord = box.addButton(tr("Open"), QMessageBox::AcceptRole);
+    }
+    box.exec();
+    if (discord && box.clickedButton() == discord) {
+        QDesktopServices::openUrl(m_access == Access::NotWhitelisted && m_manifest && m_manifest->discordUrl.isValid() ? m_manifest->discordUrl
+                                                                                                                     : m_accessLinkUrl);
     }
 }

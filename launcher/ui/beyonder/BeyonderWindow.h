@@ -61,6 +61,7 @@ class BeyonderWindow : public QMainWindow {
     void onPlayClicked();
     void rebuildAccountMenu();
     void pingServer();
+    void checkAccess();
 
    private:
     enum class State : std::uint8_t { Checking, NeedsInstall, NeedsUpdate, Ready, Installing, Running, Error };
@@ -98,6 +99,17 @@ class BeyonderWindow : public QMainWindow {
     int currentMaxMemoryMB() const;
     void setMaxMemoryMB(int mb);
 
+    // Editions (Standard / Lite ...)
+    QString currentEditionId() const;
+    QString installedEditionId() const;
+    void setEdition(const QString& id);
+    void rebuildEditionMenu();
+
+    // Access (whitelist, Discord link, Lost Control, bans) from the manifest's accessUrl
+    void onAccessReply(const QByteArray& reply);
+    bool accessBlocksPlay() const;
+    void explainAccess();
+
     State m_state = State::Checking;
     QString m_statusMessage;
     int m_installPercent = -1;
@@ -114,6 +126,14 @@ class BeyonderWindow : public QMainWindow {
     int m_serverMax = -1;
     qint64 m_serverLatency = -1;
     QPointer<MinecraftInstance> m_watched;
+
+    enum class Access : std::uint8_t { NotConfigured, Unknown, Checking, Allowed, NotWhitelisted, DiscordRequired, LostControl, Banned, Unreachable };
+    Access m_access = Access::NotConfigured;
+    QString m_accessMessage;
+    QUrl m_accessLinkUrl;
+    QString m_accessDiscordName;
+    NetJob::Ptr m_accessJob;
+    QTimer* m_accessTimer = nullptr;
 
     // Chrome
     QWidget* m_root = nullptr;
@@ -137,7 +157,8 @@ class BeyonderWindow : public QMainWindow {
     QLabel* m_serverLabel = nullptr;
     QLabel* m_accessLabel = nullptr;
     QWidget* m_cover = nullptr;
-    QLabel* m_editionBadge = nullptr;
+    QToolButton* m_editionButton = nullptr;
+    QMenu* m_editionMenu = nullptr;
     QLabel* m_stateBadge = nullptr;
     QLabel* m_installedLabel = nullptr;
     QLabel* m_playtimeBadge = nullptr;
