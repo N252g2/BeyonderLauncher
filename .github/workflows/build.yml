@@ -9,7 +9,7 @@ on:
     branches: ["**"]
     tags-ignore: ["**"]
     # The website, pack manifest and modpack in docs/ don't need a new launcher build.
-    paths-ignore: ["docs/**"]
+    paths-ignore: ["docs/**", "server/**"]
   pull_request:
   workflow_call:
     inputs:
