@@ -1,7 +1,7 @@
 {
   "formatVersion": 1,
-  "packVersion": "0.1.1",
-  "mrpackUrl": "https://n252g2.github.io/BeyonderLauncher/pack/Beyonder-0.1.1.mrpack",
+  "packVersion": "0.2.0",
+  "mrpackUrl": "https://n252g2.github.io/BeyonderLauncher/pack/Beyonder-0.2.0.mrpack",
   "server": "localhost",
   "serverName": "Tingen (local)",
   "season": "Season 0",
@@ -11,12 +11,18 @@
     "discord": "https://discord.gg/UdHt3BYnp2",
     "website": "https://n252g2.github.io/BeyonderLauncher"
   },
-  "motd": "<h2>Season 0: Tingen</h2><p>Starter pack: Minecraft 1.21.1 with NeoForge. Mods and the server are coming soon.</p>",
+  "motd": "<h2>Season 0: Tingen</h2><p>The Beyonder mod is in. Night falls over Tingen: gaslight, fog and a red moon. Press <b>V</b> to open your Spirit Vision.</p>",
   "news": [
+    {
+      "title": "Tingen at Night",
+      "date": "2026-11-26",
+      "body": "The first Beyonder mod build is in the pack: a muted Victorian color grade, thick night fog under a red moon, gas lamps and Tingen street blocks, and the Seer's Spirit Vision (press V).",
+      "url": "https://github.com/N252g2/BeyonderMod"
+    },
     {
       "title": "Update test: launcher 0.1.3",
       "date": "2026-11-26",
-      "body": "<p>Settings \u203a Updates should offer a one-click update to 0.1.3.</p>"
+      "body": "<p>Settings › Updates should offer a one-click update to 0.1.3.</p>"
     }
   ],
   "launcher": {
