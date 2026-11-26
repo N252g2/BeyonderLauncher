@@ -118,7 +118,10 @@ MSAStep::MSAStep(AccountData* data, bool silent) : AuthStep(data), m_silent(sile
 
     {
         auto replyHandler = new LoggingOAuthHttpServerReplyHandler(this);
-        replyHandler->setCallbackText(QString(R"XXX(
+        if (BuildConfig.LOGIN_CALLBACK_URL.isEmpty()) {
+            replyHandler->setCallbackText(QObject::tr("Login successful. You can close this tab and return to %1.").arg(BuildConfig.LAUNCHER_DISPLAYNAME));
+        } else {
+            replyHandler->setCallbackText(QString(R"XXX(
     <noscript>
       <meta http-equiv="Refresh" content="0; URL=%1" />
     </noscript>
@@ -127,7 +130,8 @@ MSAStep::MSAStep(AccountData* data, bool silent) : AuthStep(data), m_silent(sile
       window.location.replace("%1");
     </script>
     )XXX")
-                                          .arg(BuildConfig.LOGIN_CALLBACK_URL));
+                                              .arg(BuildConfig.LOGIN_CALLBACK_URL));
+        }
         m_oauth2.setReplyHandler(replyHandler);
     } else {
         m_oauth2.setReplyHandler(new CustomOAuthOobReplyHandler(this));
@@ -184,6 +188,12 @@ QString MSAStep::describe()
 
 void MSAStep::perform()
 {
+    if (m_clientId.isEmpty()) {
+        emit finished(AccountTaskState::STATE_FAILED_HARD,
+                      tr("This build of %1 has no Microsoft client ID. Build it with -DLauncher_MSA_CLIENT_ID=<your Azure app ID>.")
+                          .arg(BuildConfig.LAUNCHER_DISPLAYNAME));
+        return;
+    }
     if (m_silent) {
         if (m_data->msaClientID != m_clientId) {
             emit finished(AccountTaskState::STATE_DISABLED,

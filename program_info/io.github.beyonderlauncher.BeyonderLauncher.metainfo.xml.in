@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>@Launcher_AppID@</id>
+  <name>@Launcher_DisplayName@</name>
+  <summary>Launcher for Beyonder, a Lord of the Mysteries-inspired Minecraft MMORPG</summary>
+  <developer id="io.github.beyonderlauncher">
+    <name>Beyonder Launcher Contributors</name>
+  </developer>
+  <metadata_license>CC0-1.0</metadata_license>
+  <project_license>GPL-3.0-only</project_license>
+  <description>
+    <p>Beyonder Launcher signs you in, installs and updates the Beyonder modpack, and connects you to the server in one click.</p>
+    <p>Beyonder Launcher is a fork of Prism Launcher. It is not Prism Launcher and is not endorsed by or affiliated with the Prism Launcher project.</p>
+  </description>
+  <releases>
+    <release version="@Launcher_VERSION_NAME@" date="@Launcher_BUILD_TIMESTAMP@"></release>
+  </releases>
+  <url type="homepage">@Beyonder_SITE_URL@</url>
+  <url type="bugtracker">@Beyonder_GIT_URL@/issues</url>
+  <url type="vcs-browser">@Beyonder_GIT_URL@</url>
+  <content_rating type="oars-1.1">
+    <content_attribute id="violence-fantasy">moderate</content_attribute>
+    <content_attribute id="social-chat">intense</content_attribute>
+  </content_rating>
+  <launchable type="desktop-id">@Launcher_AppID@.desktop</launchable>
+</component>
