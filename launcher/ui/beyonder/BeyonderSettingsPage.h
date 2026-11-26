@@ -48,6 +48,7 @@ class BeyonderSettingsPage : public QWidget {
     Beyonder::ToggleSwitch* boundToggle(const QString& setting);
     QWidget* page(QWidget* first, QWidget* second = nullptr);
     void optimizeAutomatically();
+    void uninstallLauncher();
     QString recommendedEditionId() const;
 
     BeyonderWindow* m_window;

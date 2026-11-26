@@ -10,6 +10,11 @@
 #include "BeyonderSettingsPage.h"
 
 #include <QButtonGroup>
+#include <QCheckBox>
+#include <QCoreApplication>
+#include <QFileInfo>
+#include <QMessageBox>
+#include <QProcess>
 #include <QDesktopServices>
 #include <QDir>
 #include <QFrame>
@@ -134,7 +139,74 @@ QWidget* BeyonderSettingsPage::buildGeneral()
                                  boundToggle("ShowConsoleOnError")));
     card.body->addWidget(makeRow(tr("Start in Advanced view"), tr("Opens the full multi-instance launcher instead of this home screen. Takes effect on restart."),
                                  boundToggle("BeyonderClassicView")));
-    return page(card.frame);
+
+    auto* uninstall = makeDangerButton(tr("Uninstall Launcher"), Icon::Alert);
+    connect(uninstall, &QPushButton::clicked, this, &BeyonderSettingsPage::uninstallLauncher);
+    auto danger = makeCard(tr("Uninstall"),
+                           tr("Removes Beyonder Launcher from this computer. You can also delete the game files, worlds, settings and saved "
+                              "sign-ins."),
+                           uninstall);
+    return page(card.frame, danger.frame);
+}
+
+void BeyonderSettingsPage::uninstallLauncher()
+{
+    if (auto* inst = m_window->findInstance(); inst && inst->isRunning()) {
+        QMessageBox::information(m_window, tr("Uninstall"), tr("Close Beyonder first, then uninstall the launcher."));
+        return;
+    }
+
+    const QString dataDir = QDir(APPLICATION->dataRoot()).canonicalPath();
+    // Only ever delete a folder that is clearly the launcher's own (never home or a drive root).
+    const bool dataDirIsSafe = !dataDir.isEmpty() && dataDir != QDir(QDir::homePath()).canonicalPath() && !QDir(dataDir).isRoot() &&
+                               QFileInfo(dataDir).fileName().contains("beyonder", Qt::CaseInsensitive);
+
+    const QString uninstaller = QDir(QCoreApplication::applicationDirPath()).filePath("uninstall.exe");
+    bool hasUninstaller = false;
+#ifdef Q_OS_WIN
+    hasUninstaller = !APPLICATION->isPortable() && QFileInfo::exists(uninstaller);
+#endif
+
+    QMessageBox box(QMessageBox::Warning, tr("Uninstall Beyonder Launcher"),
+                    hasUninstaller ? tr("Beyonder Launcher will close and remove itself from this computer.")
+                                   : tr("This copy of Beyonder Launcher can't remove itself. After it closes, delete it yourself:\n\n%1")
+                                         .arg(
+#if defined(Q_OS_MACOS)
+                                             tr("Drag Beyonder Launcher from Applications to the Trash.")
+#elif defined(Q_OS_WIN)
+                                             tr("Delete the folder %1").arg(QDir::toNativeSeparators(QCoreApplication::applicationDirPath()))
+#else
+                                             tr("Delete the AppImage or the folder you extracted it to.")
+#endif
+                                                 ),
+                    QMessageBox::NoButton, m_window);
+    auto* deleteData = new QCheckBox(tr("Also delete game files, worlds, settings and saved sign-ins\n(%1)").arg(QDir::toNativeSeparators(dataDir)));
+    deleteData->setEnabled(dataDirIsSafe);
+    box.setCheckBox(deleteData);
+    auto* confirm = box.addButton(hasUninstaller ? tr("Uninstall") : tr("Close Launcher"), QMessageBox::DestructiveRole);
+    box.addButton(QMessageBox::Cancel);
+    box.setDefaultButton(QMessageBox::Cancel);
+    box.exec();
+    if (box.clickedButton() != confirm)
+        return;
+
+    const bool removeData = deleteData->isChecked() && dataDirIsSafe;
+    if (removeData) {
+        // The folder is in use while the launcher runs, so delete it a few seconds after we exit.
+#ifdef Q_OS_WIN
+        QProcess cleanup;
+        cleanup.setProgram("cmd.exe");
+        cleanup.setNativeArguments(QString("/c timeout /t 5 /nobreak >nul & rmdir /s /q \"%1\"").arg(QDir::toNativeSeparators(dataDir)));
+        cleanup.startDetached();
+#else
+        QProcess::startDetached("/bin/sh", { "-c", "sleep 3; rm -rf -- \"$0\"", dataDir });
+#endif
+    }
+    if (hasUninstaller) {
+        // Silent mode: the confirmation above is the only prompt. The uninstaller closes the launcher itself.
+        QProcess::startDetached(uninstaller, { "/S" });
+    }
+    QCoreApplication::quit();
 }
 
 QWidget* BeyonderSettingsPage::buildAppearance()
