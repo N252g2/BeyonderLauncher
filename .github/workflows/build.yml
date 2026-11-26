@@ -100,10 +100,12 @@ jobs:
 
       - name: Configure project
         env:
-          # Your own Azure app ID, approved for the Minecraft API. Set it under Settings > Secrets > Actions.
+          # Optional override of the built-in Azure app ID (Settings > Secrets > Actions).
           MSA_CLIENT_ID: ${{ secrets.MSA_CLIENT_ID }}
         run: |
-          cmake --preset "$CMAKE_PRESET" -D VCPKG_HOST_TRIPLET="$VCPKG_TRIPLET" -D VCPKG_TARGET_TRIPLET="$VCPKG_TRIPLET" -D Launcher_MSA_CLIENT_ID="$MSA_CLIENT_ID"
+          EXTRA_ARGS=()
+          if [ -n "$MSA_CLIENT_ID" ]; then EXTRA_ARGS+=(-D Launcher_MSA_CLIENT_ID="$MSA_CLIENT_ID"); fi
+          cmake --preset "$CMAKE_PRESET" -D VCPKG_HOST_TRIPLET="$VCPKG_TRIPLET" -D VCPKG_TARGET_TRIPLET="$VCPKG_TRIPLET" "${EXTRA_ARGS[@]}"
 
       - name: Run build
         run: |

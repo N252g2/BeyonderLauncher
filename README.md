@@ -37,7 +37,7 @@ Microsoft login needs your **own** Azure application, and Mojang has to allow-li
 
 1. Register an app in the Azure portal (Microsoft Entra ID → App registrations). Supported account types: *Personal Microsoft accounts only*. Under Authentication, enable *Allow public client flows*.
 2. Apply for Minecraft API access for that app ID using the form linked from Minecraft's help article on Java Edition game service API access. Until it's approved, sign-in fails with a 403.
-3. Add the app ID as a repository secret named `MSA_CLIENT_ID` (Settings → Secrets and variables → Actions). For local builds pass `-DLauncher_MSA_CLIENT_ID=<id>`.
+3. The app ID is set as `Launcher_MSA_CLIENT_ID` in `CMakeLists.txt`. It's a public identifier, not a secret. To override it, add a repository secret named `MSA_CLIENT_ID`, or pass `-DLauncher_MSA_CLIENT_ID=<id>` to a local build.
 
 ### Pack manifest (single-game mode)
 

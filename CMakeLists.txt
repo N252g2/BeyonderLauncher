@@ -279,9 +279,9 @@ endif()
 
 # By using this key in your builds you accept the terms of use laid down in
 # https://docs.microsoft.com/en-us/legal/microsoft-identity-platform/terms-of-use
-# Beyonder Launcher: Prism's client ID is NOT used. Pass your own (approved for the Minecraft API)
-# at configure time: -DLauncher_MSA_CLIENT_ID=<id>  (CI reads it from the MSA_CLIENT_ID secret).
-set(Launcher_MSA_CLIENT_ID "" CACHE STRING "Client ID you can get from Microsoft Identity Platform when you register an application")
+# Beyonder Launcher's own Azure app (not Prism's). It must be approved for the Minecraft API.
+# Forks of Beyonder Launcher: register your own and override with -DLauncher_MSA_CLIENT_ID=<id>.
+set(Launcher_MSA_CLIENT_ID "fe848709-7f30-4ce5-a76a-218136c3759b" CACHE STRING "Client ID you can get from Microsoft Identity Platform when you register an application")
 
 # By using this key in your builds you accept the terms and conditions laid down in
 # https://support.curseforge.com/en/support/solutions/articles/9000207405-curse-forge-3rd-party-api-terms-and-conditions
