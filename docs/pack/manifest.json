@@ -14,6 +14,11 @@
   "motd": "<h2>Season 0: Tingen</h2><p>Choose <b>Standard</b> for Beyonder Shaders (shadows, red moonlight, gaslight and fog) or <b>Lite</b> for older computers. Press <b>V</b> to open your Spirit Vision.</p>",
   "news": [
     {
+      "title": "Launcher 0.1.4: Minecraft sign-in fix",
+      "date": "2026-11-26",
+      "body": "<p>Signing in with Microsoft now asks for the right Xbox permissions, so the code page and the Minecraft step stop refusing the launcher. If an account shows an error, remove it in Settings \u203a Accounts and add it again.</p>"
+    },
+    {
       "title": "The ability wheel and potion visions",
       "date": "2026-11-26",
       "body": "Hold G to open the ability wheel and pick a power or your Spirit Vision. Drinking a potion now brings a vision: the cold, the twisting world, the whispers, and the flash when it takes hold. Builders can raise row houses, shops, a chapel and a whole Tingen street.",
@@ -42,19 +47,14 @@
       "date": "2026-11-26",
       "body": "The first Beyonder mod build is in the pack: a muted Victorian color grade, thick night fog under a red moon, gas lamps and Tingen street blocks, and the Seer's Spirit Vision (press V).",
       "url": "https://github.com/N252g2/BeyonderMod"
-    },
-    {
-      "title": "Update test: launcher 0.1.3",
-      "date": "2026-11-26",
-      "body": "<p>Settings › Updates should offer a one-click update to 0.1.3.</p>"
     }
   ],
   "launcher": {
-    "version": "0.1.3",
+    "version": "0.1.4",
     "url": "https://github.com/N252g2/BeyonderLauncher/releases/latest",
     "windows": {
-      "installerUrl": "https://github.com/N252g2/BeyonderLauncher/releases/download/0.1.3/BeyonderLauncher-Windows-MSVC-Setup-0.1.3.exe",
-      "sha256": "62de5d7e26170cdde28055a59541c9656f25230d551b2c6f59696ed2a4f68415"
+      "installerUrl": "https://github.com/N252g2/BeyonderLauncher/releases/download/0.1.4/BeyonderLauncher-Windows-MSVC-Setup-0.1.4.exe",
+      "sha256": "dfad069b86c2f5fd92a71150449e8ba5e7261ee6d2422369e508f46121a5dcb5"
     }
   },
   "editions": [
