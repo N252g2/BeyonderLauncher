@@ -1,8 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0">
-  <channel>
-    <title>Beyonder Launcher news</title>
-    <link>https://n252g2.github.io/BeyonderLauncher/</link>
-    <description>News for the Beyonder Launcher</description>
-  </channel>
-</rss>
+<rss version="2.0"><channel>
+<title>Beyonder patch notes</title>
+<link>https://n252g2.github.io/BeyonderLauncher</link>
+<description>Updates to Beyonder, the Lord of the Mysteries RPG</description>
+<item><title>Patch asdwd: dwasd</title><link>https://discord.com/channels/1575435180607406163/1575436949471232070/1575525880162295831</link><guid isPermaLink="false">beyonder-news-6</guid><pubDate>Thu, 26 Nov 2026 14:57:20 +0000</pubDate><description><![CDATA[wdsawa]]></description></item>
+</channel></rss>
