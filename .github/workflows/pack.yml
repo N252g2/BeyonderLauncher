@@ -1,0 +1,38 @@
+name: Build pack
+
+# Rebuilds the .mrpack files and the manifest whenever pack/pack.json changes,
+# or on demand (Actions > Build pack > Run workflow) to pick up the newest mod build.
+on:
+  push:
+    branches: [beyonder]
+    paths: ["pack/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pack
+  cancel-in-progress: false
+
+jobs:
+  pack:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build packs
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: python3 pack/build_pack.py
+
+      - name: Publish
+        run: |
+          git add docs/pack
+          if git diff --cached --quiet; then
+            echo "Nothing changed."
+            exit 0
+          fi
+          git -c user.name="github-actions[bot]" -c user.email="41898299+github-actions[bot]@users.noreply.github.com" \
+            commit -m "Pack $(python3 -c "import json;print(json.load(open('pack/pack.json'))['version'])") (built by CI)"
+          git push

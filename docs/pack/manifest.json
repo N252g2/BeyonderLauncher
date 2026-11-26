@@ -11,8 +11,14 @@
     "discord": "https://discord.gg/UdHt3BYnp2",
     "website": "https://n252g2.github.io/BeyonderLauncher"
   },
-  "motd": "<h2>Season 0: Tingen</h2><p>The Beyonder mod is in. Night falls over Tingen: gaslight, fog and a red moon. Press <b>V</b> to open your Spirit Vision.</p>",
+  "motd": "<h2>Season 0: Tingen</h2><p>Choose <b>Standard</b> for Beyonder Shaders (shadows, red moonlight, gaslight and fog) or <b>Lite</b> for older computers. Press <b>V</b> to open your Spirit Vision.</p>",
   "news": [
+    {
+      "title": "Beyonder Shaders and Spirit Vision halos",
+      "date": "2026-11-26",
+      "body": "The Standard edition now ships our own shader pack: soft shadows, red moonlight, flickering gaslight, coal-smoke fog and lamp glow. Spirit Vision shows animated halos around players and creatures that grow brighter and change colour with their strength, and spirit markers for waypoints.",
+      "url": "https://github.com/N252g2/BeyonderMod"
+    },
     {
       "title": "Tingen at Night",
       "date": "2026-11-26",
