@@ -14,6 +14,12 @@
   "motd": "<h2>Season 0: Tingen</h2><p>Choose <b>Standard</b> for Beyonder Shaders (shadows, red moonlight, gaslight and fog) or <b>Lite</b> for older computers. Press <b>V</b> to open your Spirit Vision.</p>",
   "news": [
     {
+      "title": "The ability wheel and potion visions",
+      "date": "2026-11-26",
+      "body": "Hold G to open the ability wheel and pick a power or your Spirit Vision. Drinking a potion now brings a vision: the cold, the twisting world, the whispers, and the flash when it takes hold. Builders can raise row houses, shops, a chapel and a whole Tingen street.",
+      "url": "https://github.com/N252g2/BeyonderMod"
+    },
+    {
       "title": "Clowns, Magicians and crimson nights",
       "date": "2026-11-26",
       "body": "Sequence 8 and 7 powers: Card Throw, Air Bullet, Flame Jump, Paper Substitute and Acrobatics (G to select, R to use). Full-moon nights turn crimson, soot drifts through the streets, church bells toll, chimneys smoke and the sun is round. Pendulum markers now stand on the surface.",
