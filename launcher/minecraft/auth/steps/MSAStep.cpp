@@ -138,7 +138,9 @@ MSAStep::MSAStep(AccountData* data, bool silent) : AuthStep(data), m_silent(sile
     }
     m_oauth2.setAuthorizationUrl(QUrl("https://login.microsoftonline.com/consumers/oauth2/v2.0/authorize"));
     m_oauth2.setAccessTokenUrl(QUrl("https://login.microsoftonline.com/consumers/oauth2/v2.0/token"));
-    m_oauth2.setScope("XboxLive.SignIn XboxLive.offline_access");
+    // Beyonder Launcher: third-party Azure apps must ask for the standard scopes; the legacy
+    // "XboxLive.offline_access" scope is first-party only and Microsoft rejects or mis-issues it.
+    m_oauth2.setScope("XboxLive.signin offline_access");
     m_oauth2.setClientIdentifier(m_clientId);
     m_oauth2.setNetworkAccessManager(APPLICATION->network());
 

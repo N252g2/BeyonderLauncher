@@ -59,7 +59,7 @@ void MSADeviceCodeStep::perform()
 {
     QUrlQuery data;
     data.addQueryItem("client_id", m_clientId);
-    data.addQueryItem("scope", "XboxLive.SignIn XboxLive.offline_access");
+    data.addQueryItem("scope", "XboxLive.signin offline_access");  // Beyonder: standard scopes (see MSAStep)
     auto payload = data.query(QUrl::FullyEncoded).toUtf8();
     QUrl url("https://login.microsoftonline.com/consumers/oauth2/v2.0/devicecode");
     auto headers = QList<Net::HeaderPair>{
