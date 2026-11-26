@@ -107,11 +107,22 @@ def neoforge_version():
     mc = SPEC["minecraft"].split(".")
     prefix = f"{mc[1]}.{mc[2] if len(mc) > 2 else 0}."  # 1.21.1 -> 21.1.
     xml = get("https://maven.neoforged.net/releases/net/neoforged/neoforge/maven-metadata.xml", raw=True)
-    versions = [v.text for v in ElementTree.fromstring(xml).iter("version")
-                if v.text.startswith(prefix) and "-" not in v.text]
+    released = {v.text for v in ElementTree.fromstring(xml).iter("version")
+                if v.text.startswith(prefix) and "-" not in v.text}
+    # Launchers install NeoForge through Prism's metadata, which lags the Maven a little.
+    # Only pick a version both know about, or the install fails with "Could not download metadata".
+    meta = get("https://meta.prismlauncher.org/v1/net.neoforged/index.json")
+    in_launcher = {v["version"] for v in meta.get("versions", [])}
+    versions = released & in_launcher
     if not versions:
-        sys.exit(f"No NeoForge release for Minecraft {SPEC['minecraft']}")
+        sys.exit(f"No NeoForge release for Minecraft {SPEC['minecraft']} in both Maven and Prism metadata")
     newest = max(versions, key=lambda v: [int(x) for x in v.split(".")])
+    newest_maven = max(released, key=lambda v: [int(x) for x in v.split(".")])
+    if newest != newest_maven:
+        print(f"NeoForge {newest_maven} is out, but launchers do not list it yet")
+    minimum = SPEC.get("neoforgeMin")
+    if minimum and [int(x) for x in newest.split(".")] < [int(x) for x in minimum.split(".")]:
+        sys.exit(f"Launchers only list NeoForge up to {newest}, but the pack needs {minimum}+. Try again later.")
     print(f"NeoForge {newest}")
     return newest
 
