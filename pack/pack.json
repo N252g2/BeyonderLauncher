@@ -1,5 +1,5 @@
 {
-  "version": "0.10.2",
+  "version": "0.11.0",
   "minecraft": "1.21.1",
   "neoforge": "latest",
   "modRepo": "N252g2/BeyonderMod",
@@ -10,20 +10,48 @@
     {
       "id": "standard",
       "name": "Standard",
-      "description": "Beyonder Shaders: soft shadows, red moonlight, flickering gaslight, coal-smoke fog and lamp glow. Needs a dedicated graphics card.",
+      "description": "Beyonder Shaders (soft shadows, red moonlight, flickering gaslight, coal-smoke fog, lamp glow) plus Distant Horizons, sound physics and ambient sounds, Ambient Environment, Particular particles and Interactive Foliage. Needs a dedicated graphics card.",
       "recommendedMemoryMB": 6144,
       "shaderpack": true,
       "modrinth": [
-        "iris"
+        "sodium",
+        "lithium",
+        "ferrite-core",
+        "dynamic-fps",
+        "simple-voice-chat",
+        "controlling",
+        "searchables",
+        "cubes-without-borders",
+        "iris",
+        "distanthorizons",
+        "sound-physics-remastered",
+        "ambientsounds",
+        "ambient-environment",
+        "particular-reforged",
+        "mc2-interactive-foliage"
       ]
     },
     {
       "id": "lite",
       "name": "Lite",
-      "description": "No shader pack. The Tingen color grade, fog and Spirit Vision still apply. Runs on most computers.",
+      "description": "The core game with the performance mods (Sodium, Lithium, FerriteCore, Dynamic FPS) and voice chat; no shaders or extra visual and sound mods. The Tingen color grade, fog and Spirit Vision still apply. Runs on most computers.",
       "recommendedMemoryMB": 4096,
       "shaderpack": false,
-      "modrinth": []
+      "modrinth": [
+        "sodium",
+        "lithium",
+        "ferrite-core",
+        "dynamic-fps",
+        "simple-voice-chat",
+        "controlling",
+        "searchables",
+        "cubes-without-borders"
+      ]
     }
+  ],
+  "serverMods": [
+    "simple-voice-chat",
+    "lithium",
+    "ferrite-core"
   ]
 }

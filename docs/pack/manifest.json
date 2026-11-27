@@ -14,6 +14,11 @@
   "motd": "<h2>Season 0: Tingen</h2><p>Choose <b>Standard</b> for Beyonder Shaders (shadows, red moonlight, gaslight and fog) or <b>Lite</b> for older computers. Press <b>V</b> to open your Spirit Vision.</p>",
   "news": [
     {
+      "title": "Arms and equipment",
+      "date": "2026-11-27",
+      "body": "<p>Pack 0.11.0 brings a new inventory. Clothing has its own slots under your armour (and a button to show your clothes over it), and there are slots for your main weapon, an ammo pouch, rings, an amulet, a charm, a worn Sealed Artifact and a three-slot potion belt (Z, B and N drink or eat from it).</p><p>Weapons now work only from the weapon slot: press <b>X</b> to draw or sheathe, and <b>C</b> to swap your main weapon with your sidearm, which also serves as your off hand. Put away, swords hang at your hip, revolvers sit in a holster and heavy weapons ride on your back.</p><p>New animations: drawing and sheathing, a combat stance for each kind of weapon, three-step attack combos, gun recoil and reloading, and poses for casting abilities and divining.</p><p>Potions digest more slowly, and acting the same way again and again counts for less, so a Sequence takes real time to master.</p><p>Also new: Lithium, FerriteCore, Dynamic FPS, Simple Voice Chat, Controlling and Cubes Without Borders in every edition; Distant Horizons, Sound Physics Remastered, AmbientSounds, Ambient Environment, Particular and Interactive Foliage in Standard.</p>"
+    },
+    {
       "title": "Who are you in Tingen?",
       "date": "2026-11-27",
       "body": "<p>Pack 0.10.0 brings character creation. The first time you join, choose a name, a look (skin tone, eyes, brows, hair, facial hair, build and clothes) and a background: History Graduate, Dock Worker, Constable, Apothecary's Apprentice, Street Urchin or Heir of a Faded House. Each gives a small perk and something to start with.</p><p>Your character's name is what others see above your head and in chat. Look straight at someone to see their account name underneath.</p>"

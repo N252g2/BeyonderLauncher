@@ -88,7 +88,8 @@ def modrinth_files(projects):
             continue
         f = next((f for f in v["files"] if f.get("primary")), v["files"][0])
         hashes, size = verified(f["url"], f["hashes"]["sha1"], f["hashes"]["sha512"], f["size"])
-        resolved[v["project_id"]] = {"url": f["url"], "name": f["filename"], "hashes": hashes, "size": size}
+        resolved[v["project_id"]] = {"url": f["url"], "name": f["filename"], "hashes": hashes, "size": size,
+                                     "server": project in SPEC.get("serverMods", [])}
         print(f"Modrinth {v['project_id']}: {f['filename']}")
         for dep in v.get("dependencies", []):
             if dep.get("dependency_type") == "required" and dep.get("project_id") not in resolved:
@@ -142,7 +143,7 @@ def build_edition(edition, mod_files, neoforge):
     if edition.get("shaderpack"):
         files.append(entry("shaderpacks/BeyonderShaders.zip", mod_files["shaderpack"], False))
     for f in modrinth_files(edition.get("modrinth", [])):
-        files.append(entry(f"mods/{f['name']}", f, False))
+        files.append(entry(f"mods/{f['name']}", f, f.get("server", False)))
 
     index = {
         "formatVersion": 1,
