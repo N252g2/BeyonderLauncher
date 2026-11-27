@@ -1,7 +1,7 @@
 {
   "formatVersion": 1,
-  "packVersion": "0.10.2",
-  "mrpackUrl": "https://n252g2.github.io/BeyonderLauncher/pack/Beyonder-0.10.2-standard.mrpack",
+  "packVersion": "0.11.0",
+  "mrpackUrl": "https://n252g2.github.io/BeyonderLauncher/pack/Beyonder-0.11.0-standard.mrpack",
   "server": "localhost",
   "serverName": "Tingen (local)",
   "season": "Season 0",
@@ -86,17 +86,17 @@
     {
       "id": "standard",
       "name": "Standard",
-      "description": "Beyonder Shaders: soft shadows, red moonlight, flickering gaslight, coal-smoke fog and lamp glow. Needs a dedicated graphics card.",
-      "mrpackUrl": "https://n252g2.github.io/BeyonderLauncher/pack/Beyonder-0.10.2-standard.mrpack",
+      "description": "Beyonder Shaders (soft shadows, red moonlight, flickering gaslight, coal-smoke fog, lamp glow) plus Distant Horizons, sound physics and ambient sounds, Ambient Environment, Particular particles and Interactive Foliage. Needs a dedicated graphics card.",
+      "mrpackUrl": "https://n252g2.github.io/BeyonderLauncher/pack/Beyonder-0.11.0-standard.mrpack",
       "recommendedMemoryMB": 6144
     },
     {
       "id": "lite",
       "name": "Lite",
-      "description": "No shader pack. The Tingen color grade, fog and Spirit Vision still apply. Runs on most computers.",
-      "mrpackUrl": "https://n252g2.github.io/BeyonderLauncher/pack/Beyonder-0.10.2-lite.mrpack",
+      "description": "The core game with the performance mods (Sodium, Lithium, FerriteCore, Dynamic FPS) and voice chat; no shaders or extra visual and sound mods. The Tingen color grade, fog and Spirit Vision still apply. Runs on most computers.",
+      "mrpackUrl": "https://n252g2.github.io/BeyonderLauncher/pack/Beyonder-0.11.0-lite.mrpack",
       "recommendedMemoryMB": 4096
     }
   ],
-  "modBuild": "v0.9.2-build.14"
+  "modBuild": "v0.10.0-build.33"
 }
