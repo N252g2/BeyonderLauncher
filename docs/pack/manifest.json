@@ -14,6 +14,11 @@
   "motd": "<h2>Season 0: Tingen</h2><p>Choose <b>Standard</b> for Beyonder Shaders (shadows, red moonlight, gaslight and fog) or <b>Lite</b> for older computers. Press <b>V</b> to open your Spirit Vision.</p>",
   "news": [
     {
+      "title": "A proper revolver, and brewing by hand",
+      "date": "2026-11-27",
+      "body": "<p>Pack 0.8.0 rebuilds the revolver as a 3D gun: hold right click to aim down the sights, left click to fire, R to reload. Hip fire scatters, aimed shots land, headshots hurt.</p><p>Brewing is now a minigame at the Apothecary Bench: work the bellows to keep the heat steady, drop each ingredient in on time, and don't crack the flask. Better brews make better potions, and a Perfect potion is far safer to drink before you've digested the last one. Every item has also been redrawn.</p>"
+    },
+    {
       "title": "Brewing, coins and revolvers",
       "date": "2026-11-27",
       "body": "<p>Pack 0.7.0 brings the <b>Apothecary Bench</b>: hold a potion formula, bring a water bottle and the ingredients, and brew your own Seer, Clown or Magician potion. Ingredients come from the wild at night and from the creatures you defeat; witches sometimes carry a formula.</p><p>Tingen now has money: copper pence, silver soli and gold pounds. A Seer can flip a soli to ask whether danger is near. Also new: a six-shot revolver with silver rounds for the undead, slate roofs, plaster walls and iron railings.</p>"
@@ -21,7 +26,7 @@
     {
       "title": "Launcher 0.1.4: Minecraft sign-in fix",
       "date": "2026-11-26",
-      "body": "<p>Signing in with Microsoft now asks for the right Xbox permissions, so the code page and the Minecraft step stop refusing the launcher. If an account shows an error, remove it in Settings › Accounts and add it again.</p>"
+      "body": "<p>Signing in with Microsoft now asks for the right Xbox permissions, so the code page and the Minecraft step stop refusing the launcher. If an account shows an error, remove it in Settings \u203a Accounts and add it again.</p>"
     },
     {
       "title": "The ability wheel and potion visions",
