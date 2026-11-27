@@ -14,6 +14,11 @@
   "motd": "<h2>Season 0: Tingen</h2><p>Choose <b>Standard</b> for Beyonder Shaders (shadows, red moonlight, gaslight and fog) or <b>Lite</b> for older computers. Press <b>V</b> to open your Spirit Vision.</p>",
   "news": [
     {
+      "title": "Dress for Tingen",
+      "date": "2026-11-27",
+      "body": "<p>Pack 0.11.1 brings the first clothes: a top hat, a bowler and a tweed flat cap; a black frock coat, a brown overcoat and a tweed jacket; burgundy and green brocade waistcoats; leather and white cotton gloves; pinstripe and black trousers; oxford shoes and riding boots. Craft them from wool, leather, string and a few trimmings, then right-click to wear them, or put them in the clothing slots (E). Armour hides what's under it unless you press Clothes in the inventory. Dyeing comes later.</p><p>Also: what's on your potion belt now hangs from your belt where others can see it, and a holstered pistol sits lower on the hip.</p>"
+    },
+    {
       "title": "Arms and equipment",
       "date": "2026-11-27",
       "body": "<p>Pack 0.11.0 brings a new inventory. Clothing has its own slots under your armour (and a button to show your clothes over it), and there are slots for your main weapon, an ammo pouch, rings, an amulet, a charm, a worn Sealed Artifact and a three-slot potion belt (Z, B and N drink or eat from it).</p><p>Weapons now work only from the weapon slot: press <b>X</b> to draw or sheathe, and <b>C</b> to swap your main weapon with your sidearm, which also serves as your off hand. Put away, swords hang at your hip, revolvers sit in a holster and heavy weapons ride on your back.</p><p>New animations: drawing and sheathing, a combat stance for each kind of weapon, three-step attack combos, gun recoil and reloading, and poses for casting abilities and divining.</p><p>Potions digest more slowly, and acting the same way again and again counts for less, so a Sequence takes real time to master.</p><p>Also new: Lithium, FerriteCore, Dynamic FPS, Simple Voice Chat, Controlling and Cubes Without Borders in every edition; Distant Horizons, Sound Physics Remastered, AmbientSounds, Ambient Environment, Particular and Interactive Foliage in Standard.</p>"
