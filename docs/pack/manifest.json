@@ -1,7 +1,7 @@
 {
   "formatVersion": 1,
-  "packVersion": "0.10.0",
-  "mrpackUrl": "https://n252g2.github.io/BeyonderLauncher/pack/Beyonder-0.10.0-standard.mrpack",
+  "packVersion": "0.10.1",
+  "mrpackUrl": "https://n252g2.github.io/BeyonderLauncher/pack/Beyonder-0.10.1-standard.mrpack",
   "server": "localhost",
   "serverName": "Tingen (local)",
   "season": "Season 0",
@@ -36,7 +36,7 @@
     {
       "title": "Launcher 0.1.4: Minecraft sign-in fix",
       "date": "2026-11-26",
-      "body": "<p>Signing in with Microsoft now asks for the right Xbox permissions, so the code page and the Minecraft step stop refusing the launcher. If an account shows an error, remove it in Settings \u203a Accounts and add it again.</p>"
+      "body": "<p>Signing in with Microsoft now asks for the right Xbox permissions, so the code page and the Minecraft step stop refusing the launcher. If an account shows an error, remove it in Settings › Accounts and add it again.</p>"
     },
     {
       "title": "The ability wheel and potion visions",
@@ -82,16 +82,16 @@
       "id": "standard",
       "name": "Standard",
       "description": "Beyonder Shaders: soft shadows, red moonlight, flickering gaslight, coal-smoke fog and lamp glow. Needs a dedicated graphics card.",
-      "mrpackUrl": "https://n252g2.github.io/BeyonderLauncher/pack/Beyonder-0.10.0-standard.mrpack",
+      "mrpackUrl": "https://n252g2.github.io/BeyonderLauncher/pack/Beyonder-0.10.1-standard.mrpack",
       "recommendedMemoryMB": 6144
     },
     {
       "id": "lite",
       "name": "Lite",
       "description": "No shader pack. The Tingen color grade, fog and Spirit Vision still apply. Runs on most computers.",
-      "mrpackUrl": "https://n252g2.github.io/BeyonderLauncher/pack/Beyonder-0.10.0-lite.mrpack",
+      "mrpackUrl": "https://n252g2.github.io/BeyonderLauncher/pack/Beyonder-0.10.1-lite.mrpack",
       "recommendedMemoryMB": 4096
     }
   ],
-  "modBuild": "v0.9.0-build.12"
+  "modBuild": "v0.9.1-build.13"
 }
