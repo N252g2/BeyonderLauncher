@@ -14,6 +14,11 @@
   "motd": "<h2>Season 0: Tingen</h2><p>Choose <b>Standard</b> for Beyonder Shaders (shadows, red moonlight, gaslight and fog) or <b>Lite</b> for older computers. Press <b>V</b> to open your Spirit Vision.</p>",
   "news": [
     {
+      "title": "Tingen",
+      "date": "2026-11-27",
+      "body": "<p>Pack 0.12.0 brings the first city: <b>Tingen</b>, nearly 900 blocks across, built where the Khoy meets the Tussock. You arrive on the white plaza before <b>Saint Selena's Cathedral</b> and its black clock tower, with City Hall beside it. Zouteland Street runs just behind, with a certain plain brick office at number 36.</p><p>West of the Khoy are Khoy University and the terraces of the West Borough, Daffodil Street among them. North are the station, the canal and the mills. East are Iron Cross Street, the tenements, the market, the workhouse and the docks; Golden Indus has the opera, the bank and the grand houses by the river. Over the Tussock: Tingen University, the gardens, Raphael Cemetery and the villas. Beyond the Boundary Road are the brickfields, Westbrook, the Eastwharf basin, the County Asylum and Tingen Gaol.</p><p>Thousands of houses, shops and pubs have rooms you can walk into. Streets are gas-lit and signposted, and the sewers run under the avenues. Monsters don't spawn in the streets, though the sewers are another matter.</p><p>New blocks for builders: stock and red brick, ashlar, clay roof tiles, flagstones and kerbs, weathered timber, sash and shop windows, striped awnings, wall gas lamps, clock faces, gravestones, crates, sewer grates, park benches and pillar boxes.</p>"
+    },
+    {
       "title": "Dress for Tingen",
       "date": "2026-11-27",
       "body": "<p>Pack 0.11.1 brings the first clothes: a top hat, a bowler and a tweed flat cap; a black frock coat, a brown overcoat and a tweed jacket; burgundy and green brocade waistcoats; leather and white cotton gloves; pinstripe and black trousers; oxford shoes and riding boots. Craft them from wool, leather, string and a few trimmings, then right-click to wear them, or put them in the clothing slots (E). Armour hides what's under it unless you press Clothes in the inventory. Dyeing comes later.</p><p>Also: what's on your potion belt now hangs from your belt where others can see it, and a holstered pistol sits lower on the hip.</p>"
