@@ -14,6 +14,11 @@
   "motd": "<h2>Season 0: Tingen</h2><p>Choose <b>Standard</b> for Beyonder Shaders (shadows, red moonlight, gaslight and fog) or <b>Lite</b> for older computers. Press <b>V</b> to open your Spirit Vision.</p>",
   "news": [
     {
+      "title": "An armoury for Tingen",
+      "date": "2026-11-27",
+      "body": "<p>Pack 0.9.0 adds a longsword, a gentleman's sword cane (use it to draw the hidden blade), a crimson greatsword whose cuts fester, and a crescent staff that helps a Seer gather Spirituality. The revolver is slimmer and smaller on screen.</p><p>And a Sealed Artifact: <b>Death Knell</b>, an iron-black long-barrelled revolver. Every shot finds a weakness, and a bell tolls with it. It takes its price from you.</p>"
+    },
+    {
       "title": "A proper revolver, and brewing by hand",
       "date": "2026-11-27",
       "body": "<p>Pack 0.8.0 rebuilds the revolver as a 3D gun: hold right click to aim down the sights, left click to fire, R to reload. Hip fire scatters, aimed shots land, headshots hurt.</p><p>Brewing is now a minigame at the Apothecary Bench: work the bellows to keep the heat steady, drop each ingredient in on time, and don't crack the flask. Better brews make better potions, and a Perfect potion is far safer to drink before you've digested the last one. Every item has also been redrawn.</p>"
@@ -26,7 +31,7 @@
     {
       "title": "Launcher 0.1.4: Minecraft sign-in fix",
       "date": "2026-11-26",
-      "body": "<p>Signing in with Microsoft now asks for the right Xbox permissions, so the code page and the Minecraft step stop refusing the launcher. If an account shows an error, remove it in Settings › Accounts and add it again.</p>"
+      "body": "<p>Signing in with Microsoft now asks for the right Xbox permissions, so the code page and the Minecraft step stop refusing the launcher. If an account shows an error, remove it in Settings \u203a Accounts and add it again.</p>"
     },
     {
       "title": "The ability wheel and potion visions",
