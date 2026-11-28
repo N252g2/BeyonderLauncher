@@ -14,9 +14,14 @@
   "motd": "<h2>Season 0: Tingen</h2><p>Choose <b>Standard</b> for Beyonder Shaders (shadows, red moonlight, gaslight and fog) or <b>Lite</b> for older computers. Press <b>V</b> to open your Spirit Vision.</p>",
   "news": [
     {
+      "title": "A proper potion belt",
+      "date": "2026-11-28",
+      "body": "<p>Pack 0.12.3: whatever is in your belt slots now sits in a row along the front of your waist, on the belt line. The ones at the ends curve round onto your hips. They lie flat against your coat or armour instead of hanging loose, and nothing goes round the back any more.</p>"
+    },
+    {
       "title": "Houses that make sense",
       "date": "2026-11-28",
-      "body": "<p>Pack 0.12.2: every house in Tingen has been refitted. Front doors sit flush with the wall under a fanlight, with a step up from the pavement. Inside there is a proper hall from the front door to the back, a staircase that climbs floor by floor, and rooms furnished along the walls so nothing blocks a door or a stair. Shops have counters, pubs have bars and barrels, and back doors open onto yards instead of onto walls. Doors that led nowhere have been bricked up, and the odd sheds in the back gardens are gone.</p><p>A holstered revolver now sits with its grip to the back, and the things on your belt sit round your waist instead of dangling in front.</p><p>Server owners: run /beyonder city build again to rebuild the city with the new houses.</p>"
+      "body": "<p>Pack 0.12.2: every house in Tingen has been refitted. Front doors sit flush with the wall under a fanlight, with a step up from the pavement. Inside there is a proper hall from the front door to the back, a staircase that climbs floor by floor, and rooms furnished along the walls so nothing blocks a door or a stair. Shops have counters, pubs have bars and barrels, and back doors open onto yards instead of onto walls. Doors that led nowhere have been bricked up, and the odd sheds in the back gardens are gone.</p><p>A holstered revolver now sits with its grip to the back.</p><p>Server owners: run /beyonder city build again to rebuild the city with the new houses.</p>"
     },
     {
       "title": "Below Blackthorn",
